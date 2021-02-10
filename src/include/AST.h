@@ -3,8 +3,7 @@
 #include "lexer.h"
 #include "list.h"
 #include "token.h"
-typedef struct SCSS_AST_STRUCT
-{
+typedef struct SCSS_AST_STRUCT {
   enum {
     AST_NAME,
     AST_STRING,
@@ -17,20 +16,20 @@ typedef struct SCSS_AST_STRUCT
     AST_NOOP,
   } type;
 
-  struct SCSS_AST_STRUCT* left;
-  struct SCSS_AST_STRUCT* right;
-  struct SCSS_AST_STRUCT* body;
-  struct SCSS_AST_STRUCT* value;
+  struct SCSS_AST_STRUCT *left;
+  struct SCSS_AST_STRUCT *right;
+  struct SCSS_AST_STRUCT *body;
+  struct SCSS_AST_STRUCT *value;
 
-  scss_token_T* token;
+  scss_token_T *token;
 
-  char* string_value;
-  char* name;
+  char *string_value;
+  char *name;
   float float_value;
   int int_value;
 
-  list_T* list_value;
+  list_T *list_value;
 } scss_AST_T;
 
-scss_AST_T* init_scss_ast(int type);
+scss_AST_T *init_scss_ast(int type);
 #endif

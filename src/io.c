@@ -4,10 +4,9 @@
 #include <string.h>
 #include <unistd.h>
 
-char* scss_read_file(const char* filename)
-{
-  FILE* fp;
-  char* line = NULL;
+char *scss_read_file(const char *filename) {
+  FILE *fp;
+  char *line = NULL;
   size_t len = 0;
   ssize_t read;
 
@@ -19,7 +18,7 @@ char* scss_read_file(const char* filename)
 
   unsigned int chunk_size = 256;
 
-  char* buffer = (char*)calloc(chunk_size, sizeof(char));
+  char *buffer = (char *)calloc(chunk_size, sizeof(char));
   unsigned int bufflen = chunk_size;
   unsigned int size_left = chunk_size;
   buffer[0] = '\0';
@@ -30,7 +29,8 @@ char* scss_read_file(const char* filename)
     if (linelen > size_left) {
       unsigned int more_space = (linelen - size_left) + chunk_size;
 
-      buffer = (char*)realloc(buffer, (bufflen + linelen + 1 + (more_space)) * sizeof(char));
+      buffer = (char *)realloc(buffer, (bufflen + linelen + 1 + (more_space)) *
+                                           sizeof(char));
       bufflen += (bufflen + linelen);
       size_left += more_space;
     }
@@ -46,9 +46,8 @@ char* scss_read_file(const char* filename)
   return buffer;
 }
 
-void scss_write_file(const char* filename, char* outbuffer)
-{
-  FILE* fp;
+void scss_write_file(const char *filename, char *outbuffer) {
+  FILE *fp;
 
   fp = fopen(filename, "wb");
   if (fp == NULL) {
@@ -61,12 +60,11 @@ void scss_write_file(const char* filename, char* outbuffer)
   fclose(fp);
 }
 
-char* sh(const char* cmd)
-{
-  char* output = (char*)calloc(1, sizeof(char));
+char *sh(const char *cmd) {
+  char *output = (char *)calloc(1, sizeof(char));
   output[0] = '\0';
 
-  FILE* fp;
+  FILE *fp;
   char path[1035];
 
   fp = popen(cmd, "r");
@@ -77,7 +75,8 @@ char* sh(const char* cmd)
   }
 
   while (fgets(path, sizeof(path), fp) != NULL) {
-    output = (char*)realloc(output, (strlen(output) + strlen(path) + 1) * sizeof(char));
+    output = (char *)realloc(output, (strlen(output) + strlen(path) + 1) *
+                                         sizeof(char));
     strcat(output, path);
   }
 
@@ -86,7 +85,4 @@ char* sh(const char* cmd)
   return output;
 }
 
-unsigned int file_exists(char* filepath)
-{
-  return access(filepath, F_OK) == 0;
-}
+unsigned int file_exists(char *filepath) { return access(filepath, F_OK) == 0; }

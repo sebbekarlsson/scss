@@ -2,10 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-
-char* str_append(char** source, const char* piece)
-{
-  char* src = *source;
+char *str_append(char **source, const char *piece) {
+  char *src = *source;
 
   if (!piece)
     return src;

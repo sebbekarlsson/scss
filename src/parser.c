@@ -91,6 +91,7 @@ AST *scss_parser_parse_string(scss_parser_T *parser) {
 AST *scss_parser_parse_int(scss_parser_T *parser) {
   AST *ast = init_scss_ast(AST_INT);
   ast->int_value = atoi(parser->token->value);
+  ast->string_value = strdup(parser->token->value);
   scss_parser_eat(parser, TOKEN_INT);
   return ast;
 }
@@ -98,6 +99,7 @@ AST *scss_parser_parse_int(scss_parser_T *parser) {
 AST *scss_parser_parse_float(scss_parser_T *parser) {
   AST *ast = init_scss_ast(AST_FLOAT);
   ast->float_value = atof(parser->token->value);
+  ast->string_value = strdup(parser->token->value);
   scss_parser_eat(parser, TOKEN_FLOAT);
   return ast;
 }
@@ -137,9 +139,9 @@ AST *scss_parser_parse_term(scss_parser_T *parser) {
 AST *scss_parser_parse_expr(scss_parser_T *parser) {
   AST *left = scss_parser_parse_term(parser);
 
-  while (left && parser->token->type == TOKEN_GT || parser->token->type == TOKEN_LT)
-  {
-    AST* binop = init_scss_ast(AST_BINOP);
+  while (left &&
+         (parser->token->type == TOKEN_GT || parser->token->type == TOKEN_LT)) {
+    AST *binop = init_scss_ast(AST_BINOP);
     binop->left = left;
     binop->token = token_clone(parser->token);
     EAT(parser->token->type);
