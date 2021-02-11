@@ -1,0 +1,17 @@
+name: Compile and test
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v1
+    - name: make
+      run: make
+    - name: install dependencies
+      run: sudo apt-get update -y && sudo apt-get install --yes build-essential
+    - name: tests
+      run: cd tests && make && ./test.out
