@@ -1,7 +1,7 @@
 exec = test.out
 sources = $(wildcard src/*.c)
 objects = $(sources:.c=.o)
-flags = -I$$HOME/.local/include -I./../src/include/ -g -Wall -lm -Wl,--no-as-needed -ldl -fPIC -rdynamic -L$$HOME/.local/lib -lscss
+flags = -I$$HOME/.local/include -I../src/include -g -Wall -lm -Wl,--no-as-needed -ldl -fPIC -rdynamic -L$$HOME/.local/lib -lscss
 
 $(exec): $(objects) libscss.a
 	gcc $(objects) $(flags) -o $(exec)
