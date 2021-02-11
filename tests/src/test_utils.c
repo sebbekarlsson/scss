@@ -12,9 +12,10 @@
 
 #define MSG() printf("%s\n", msg)
 
-extern scss_garbage_T *GARBAGE;
+extern scss_garbage_T* GARBAGE;
 
-void ASSERT(unsigned int condition, const char *msg) {
+void ASSERT(unsigned int condition, const char* msg)
+{
   MSG();
 
   if (!condition) {
@@ -25,15 +26,16 @@ void ASSERT(unsigned int condition, const char *msg) {
   OK();
 }
 
-scss_AST_T *run_get_ast(const char *filepath) {
+scss_AST_T* run_get_ast(const char* filepath)
+{
   init_scss();
-  char *source = scss_read_file(filepath);
+  char* source = scss_read_file(filepath);
 
-  lexer_T *lexer = init_lexer(source, filepath);
-  scss_parser_T *parser = init_scss_parser(lexer);
-  scss_AST_T *root = scss_parser_parse(parser);
+  lexer_T* lexer = init_lexer(source, filepath);
+  scss_parser_T* parser = init_scss_parser(lexer);
+  scss_AST_T* root = scss_parser_parse(parser);
 
-  eval_T *eval = init_eval();
+  eval_T* eval = init_eval();
 
   root = scss_eval(root, eval);
 

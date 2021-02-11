@@ -20,7 +20,7 @@
 #define BOLDCYAN "\033[1m\033[36m"    /* Bold Cyan */
 #define BOLDWHITE "\033[1m\033[37m"   /* Bold White */
 
-scss_AST_T *run_get_ast(const char *filepath);
+scss_AST_T* run_get_ast(const char* filepath);
 
-void ASSERT(unsigned int condition, const char *msg);
+void ASSERT(unsigned int condition, const char* msg);
 #endif

@@ -1,7 +1,9 @@
 #ifndef SCSS_TOKEN_H
 #define SCSS_TOKEN_H
-typedef struct SCSS_TOKEN_STRUCT {
-  enum {
+typedef struct SCSS_TOKEN_STRUCT
+{
+  enum
+  {
     TOKEN_ID,
     TOKEN_LBRACE,
     TOKEN_RBRACE,
@@ -50,13 +52,13 @@ typedef struct SCSS_TOKEN_STRUCT {
     TOKEN_BLOCK,
     TOKEN_EOF
   } type;
-  char *value;
+  char* value;
   char c;
 } scss_token_T;
 
-scss_token_T *init_token(char *value, int type);
+scss_token_T* init_token(char* value, int type);
 
-void token_free(scss_token_T *token);
+void token_free(scss_token_T* token);
 
-scss_token_T *token_clone(scss_token_T *token);
+scss_token_T* token_clone(scss_token_T* token);
 #endif
