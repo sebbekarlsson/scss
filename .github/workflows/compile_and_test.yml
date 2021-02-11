@@ -16,4 +16,4 @@ jobs:
     - name: create directories
       run: mkdir -p $HOME/.local/include ; mkdir -p $HOME/.local/lib
     - name: tests
-      run: cd tests && make && ./test.out
+      run: make ; make install ; cp ./libscss.a tests/. ; cd tests && make && ./test.out
