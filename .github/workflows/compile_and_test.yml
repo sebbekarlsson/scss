@@ -10,10 +10,10 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: make
-      run: make
+      run: make ; sudo make install ; cp ./libscss.a tests/.
     - name: install dependencies
       run: sudo apt-get update -y && sudo apt-get install --yes build-essential
     - name: create directories
-      run: mkdir -p $HOME/.local/include ; mkdir -p $HOME/.local/lib
+      run: mkdir -p $HOME/.local/include ; mkdir -p $HOME/.local/lib ; mkdir -p $HOME/.local/bin
     - name: tests
-      run: make ; make install ; cp ./libscss.a tests/. ; cd tests && make && ./test.out
+      run: cd tests && make && ./test.out
