@@ -14,6 +14,6 @@ jobs:
     - name: create directories
       run: mkdir -p $HOME/.local/include ; mkdir -p $HOME/.local/lib ; mkdir -p $HOME/.local/bin ; sudo mkdir -p /root/.local/lib ; sudo mkdir -p /root/.local/include ; sudo mkdir -p /root/.local/bin
     - name: make
-      run: make ; make instal ; sudo make install ; cp ./libscss.a tests/. ; sudo mkdir -p /usr/local/include/scss ; sudo cp -r src/include/* /usr/local/include/scss/.
+      run: make ; make install ; sudo make install ; cp ./libscss.a tests/. ; sudo mkdir -p /usr/local/include/scss ; sudo cp -r src/include/* /usr/local/include/scss/.
     - name: tests
       run: cd tests && make && ./test.out
