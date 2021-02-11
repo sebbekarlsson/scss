@@ -13,6 +13,7 @@ typedef struct SCSS_AST_STRUCT {
     AST_STYLE_RULE,
     AST_PROP_DEC,
     AST_BINOP,
+    AST_CALL,
     AST_NOOP,
   } type;
 
@@ -20,6 +21,7 @@ typedef struct SCSS_AST_STRUCT {
   struct SCSS_AST_STRUCT *right;
   struct SCSS_AST_STRUCT *body;
   struct SCSS_AST_STRUCT *value;
+  struct SCSS_AST_STRUCT *footer; // compound
 
   scss_token_T *token;
 
@@ -29,6 +31,9 @@ typedef struct SCSS_AST_STRUCT {
   int int_value;
 
   list_T *list_value;
+  list_T *args;
+  list_T *options;
+
 } scss_AST_T;
 
 scss_AST_T *init_scss_ast(int type);

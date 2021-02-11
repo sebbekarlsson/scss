@@ -4,6 +4,7 @@
 char *scss_emit(scss_AST_T *ast);
 char *scss_emit_style_rule(scss_AST_T *ast);
 char *scss_emit_prop_dec(scss_AST_T *ast);
+char *scss_emit_call(scss_AST_T *ast);
 char *scss_emit_name(scss_AST_T *ast);
 char *scss_emit_string(scss_AST_T *ast);
 char *scss_emit_int(scss_AST_T *ast);

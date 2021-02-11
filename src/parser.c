@@ -30,17 +30,49 @@ AST *scss_parser_parse_style_rule(scss_parser_T *parser) {
   AST *ast = init_scss_ast(AST_STYLE_RULE);
   ast->list_value = init_list(sizeof(AST *));
 
-  while (parser->token->type != TOKEN_LBRACE) {
+  AST *b = 0;
+
+  while (parser->token->type != TOKEN_LBRACE &&
+         parser->token->type != TOKEN_COLON) {
     AST *child = scss_parser_parse_expr(parser);
+    if (!b)
+      b = child;
     list_push(ast->list_value, child);
   }
 
-  EAT(TOKEN_LBRACE);
-  if (parser->token->type != TOKEN_RBRACE) {
-    ast->body = scss_parser_parse_style_rule_body(parser);
+  AST *c = 0;
+
+  AST *prev = b;
+  while (parser->token->type == TOKEN_COLON) {
+    EAT(TOKEN_COLON);
+    AST *child = scss_parser_parse_expr(parser);
+    if (!c)
+      c = child;
+
+    if (prev && child->type == AST_CALL) {
+      list_push(prev->options, child);
+    } else {
+      list_push(ast->list_value, child);
+    }
+
+    prev = child;
   }
 
-  EAT(TOKEN_RBRACE);
+  if (parser->token->type == TOKEN_LBRACE) {
+    EAT(TOKEN_LBRACE);
+    if (parser->token->type != TOKEN_RBRACE) {
+      ast->body = scss_parser_parse_style_rule_body(parser);
+    }
+
+    EAT(TOKEN_RBRACE);
+  } else {
+    ast->type = AST_PROP_DEC;
+    ast->left = b;
+    ast->list_value = 0;
+    ast->value = c;
+    EAT(TOKEN_SEMI);
+    return ast;
+  }
 
   return ast;
 }
@@ -49,27 +81,12 @@ AST *scss_parser_parse_prop_dec(scss_parser_T *parser) {
   AST *ast = init_scss_ast(AST_PROP_DEC);
   ast->list_value = init_list(sizeof(AST *));
 
-  while (parser->token->type != TOKEN_LBRACE &&
-         parser->token->type != TOKEN_COLON &&
-         parser->token->type != TOKEN_SEMI &&
-         parser->token->type != TOKEN_EOF) {
-    AST *child = scss_parser_parse_expr(parser);
-    list_push(ast->list_value, child);
-  }
+  AST *child = scss_parser_parse_expr(parser);
+  list_push(ast->list_value, child);
 
-  if (parser->token->type == TOKEN_COLON) {
-    EAT(TOKEN_COLON);
-    ast->value = scss_parser_parse_expr(parser);
-    EAT(TOKEN_SEMI);
-  } else {
-    ast->type = AST_STYLE_RULE;
-    EAT(TOKEN_LBRACE);
-    if (parser->token->type != TOKEN_RBRACE) {
-      ast->body = scss_parser_parse_style_rule_body(parser);
-    }
-
-    EAT(TOKEN_RBRACE);
-  }
+  EAT(TOKEN_COLON);
+  ast->value = scss_parser_parse_expr(parser);
+  EAT(TOKEN_SEMI);
 
   return ast;
 }
@@ -78,6 +95,27 @@ AST *scss_parser_parse_name(scss_parser_T *parser) {
   AST *ast = init_scss_ast(AST_NAME);
   ast->name = strdup(parser->token->value);
   scss_parser_eat(parser, TOKEN_ID);
+
+  if (parser->token->type == TOKEN_LPAREN) {
+    EAT(TOKEN_LPAREN);
+    ast->type = AST_CALL;
+
+    if (parser->token->type != TOKEN_RPAREN) {
+      AST *child = scss_parser_parse_factor(parser);
+      list_push(ast->args, child);
+
+      while (parser->token->type == TOKEN_COMMA) {
+        if (parser->token->type == TOKEN_COMMA)
+          EAT(TOKEN_COMMA);
+
+        child = scss_parser_parse_factor(parser);
+        list_push(ast->args, child);
+      }
+    }
+
+    EAT(TOKEN_RPAREN);
+  }
+
   return ast;
 }
 
@@ -105,25 +143,26 @@ AST *scss_parser_parse_float(scss_parser_T *parser) {
 }
 
 AST *scss_parser_parse_factor(scss_parser_T *parser) {
+  AST *left = 0;
   switch (parser->token->type) {
   case TOKEN_ID:
-    return scss_parser_parse_name(parser);
+    left = scss_parser_parse_name(parser);
     break;
   case TOKEN_STRING:
-    return scss_parser_parse_string(parser);
+    left = scss_parser_parse_string(parser);
     break;
   case TOKEN_INT:
-    return scss_parser_parse_int(parser);
+    left = scss_parser_parse_int(parser);
     break;
   case TOKEN_FLOAT:
-    return scss_parser_parse_float(parser);
+    left = scss_parser_parse_float(parser);
     break;
   default:
-    return 0;
+    left = init_scss_ast(AST_NOOP);
     break;
   }
 
-  return init_scss_ast(AST_NOOP);
+  return left;
 }
 
 /** ==== terms ==== **/
@@ -140,7 +179,11 @@ AST *scss_parser_parse_expr(scss_parser_T *parser) {
   AST *left = scss_parser_parse_term(parser);
 
   while (left &&
-         (parser->token->type == TOKEN_GT || parser->token->type == TOKEN_LT)) {
+         (parser->token->type == TOKEN_GT || parser->token->type == TOKEN_LT ||
+          parser->token->type == TOKEN_TILDE ||
+          parser->token->type == TOKEN_PLUS ||
+          parser->token->type == TOKEN_COMMA ||
+          parser->token->type == TOKEN_AND)) {
     AST *binop = init_scss_ast(AST_BINOP);
     binop->left = left;
     binop->token = token_clone(parser->token);
@@ -155,24 +198,37 @@ AST *scss_parser_parse_expr(scss_parser_T *parser) {
 /** ==== statement ==== **/
 
 AST *scss_parser_parse_statement(scss_parser_T *parser) {
+  AST *left = 0;
+
   switch (parser->token->type) {
+
+  case TOKEN_AND:
   case TOKEN_ID:
-    return scss_parser_parse_style_rule(parser);
+    //  if (lexer_peek_next_token(parser->lexer)->type == TOKEN_COLON)
+    // {
+    //  left = scss_parser_parse_prop_dec(parser);
+    //}
+    /// else
+    // {
+    left = scss_parser_parse_style_rule(parser);
+    // }
   default: { /* noop */
   } break;
   }
-  printf("[Parser.statement]: Unexpected token `%s` (%d)\n",
-         parser->token->value, parser->token->type);
-  exit(1);
 
-  return 0;
+  if (!left) {
+    printf("[Parser.statement]: Unexpected token `%s` (%d)\n",
+           parser->token->value, parser->token->type);
+    exit(1);
+  }
+
+  return left;
 }
 
 /** ==== compound ==== */
 
 AST *scss_parser_parse_compound(scss_parser_T *parser) {
   AST *ast = init_scss_ast(AST_COMPOUND);
-  ast->list_value = init_list(sizeof(AST *));
 
   AST *child = scss_parser_parse_statement(parser);
   list_push(ast->list_value, child);
@@ -190,13 +246,12 @@ AST *scss_parser_parse_compound(scss_parser_T *parser) {
 
 AST *scss_parser_parse_style_rule_body(scss_parser_T *parser) {
   AST *ast = init_scss_ast(AST_COMPOUND);
-  ast->list_value = init_list(sizeof(AST *));
 
-  AST *child = scss_parser_parse_prop_dec(parser);
+  AST *child = scss_parser_parse_statement(parser);
   list_push(ast->list_value, child);
 
   while (parser->token->type != TOKEN_RBRACE) {
-    child = scss_parser_parse_prop_dec(parser);
+    child = scss_parser_parse_statement(parser);
     list_push(ast->list_value, child);
   }
 

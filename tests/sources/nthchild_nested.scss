@@ -1,0 +1,7 @@
+div {
+  color: red;
+
+  .myelement:nth-child(2) {
+    display: block;
+  }
+}

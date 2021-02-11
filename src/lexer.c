@@ -203,7 +203,7 @@ scss_token_T *lexer_next(lexer_T *lexer) {
         return lexer_advance_token(lexer, tok);
       } else {
         scss_token_T *tok =
-            lexer_advance_token(lexer, init_token(strdup("&&"), TOKEN_AND));
+            lexer_advance_token(lexer, init_token(strdup("&"), TOKEN_AND));
         return tok;
       }
     }

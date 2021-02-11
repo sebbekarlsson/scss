@@ -1,0 +1,7 @@
+.myelement > span {
+  color: green;
+
+  .mychild > div > span {
+    color: red;
+  }
+}

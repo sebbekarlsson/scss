@@ -3,31 +3,45 @@
 
 #define AST scss_AST_T
 
-scss_AST_T *scss_eval(scss_AST_T *ast) {
+eval_T *init_eval() {
+  eval_T *eval = calloc(1, sizeof(struct EVAL_STRUCT));
+  eval->stack = init_list(sizeof(AST *));
+
+  return eval;
+}
+
+scss_AST_T *scss_eval(scss_AST_T *ast, eval_T *eval) {
+  if (!ast) {
+    printf("[Eval] cannot evaluate nil ast.\n");
+    exit(1);
+  }
   switch (ast->type) {
   case AST_STYLE_RULE:
-    return scss_eval_style_rule(ast);
+    return scss_eval_style_rule(ast, eval);
     break;
   case AST_PROP_DEC:
-    return scss_eval_prop_dec(ast);
+    return scss_eval_prop_dec(ast, eval);
     break;
+  case AST_CALL:
+    return scss_eval_call(ast, eval);
+    ;
   case AST_NAME:
-    return scss_eval_name(ast);
+    return scss_eval_name(ast, eval);
     break;
   case AST_STRING:
-    return scss_eval_string(ast);
+    return scss_eval_string(ast, eval);
     break;
   case AST_INT:
-    return scss_eval_int(ast);
+    return scss_eval_int(ast, eval);
     break;
   case AST_FLOAT:
-    return scss_eval_float(ast);
+    return scss_eval_float(ast, eval);
     break;
   case AST_BINOP:
-    return scss_eval_binop(ast);
+    return scss_eval_binop(ast, eval);
     break;
   case AST_COMPOUND:
-    return scss_eval_compound(ast);
+    return scss_eval_compound(ast, eval);
     break;
   case AST_NOOP:
     return ast;
@@ -39,44 +53,91 @@ scss_AST_T *scss_eval(scss_AST_T *ast) {
   }
 }
 
-scss_AST_T *scss_eval_style_rule(scss_AST_T *ast) {
+scss_AST_T *scss_eval_style_rule(scss_AST_T *ast, eval_T *eval) {
+  if (ast->list_value && eval->stack->size) {
+    AST *last = (AST *)eval->stack->items[eval->stack->size - 1];
+
+    if (last && last->list_value && last->list_value->size) {
+      for (unsigned int i = 0; i < last->list_value->size; i++) {
+        AST *selector = (AST *)last->list_value->items[i];
+        list_prefix(ast->list_value, selector);
+      }
+    }
+  }
+
+  list_push(eval->stack, ast);
+
   for (unsigned int i = 0; i < ast->list_value->size; i++) {
     AST *child = (AST *)ast->list_value->items[i];
     if (!child)
       continue;
-    ast->list_value->items[i] = scss_eval(child);
+    ast->list_value->items[i] = scss_eval(child, eval);
+  }
+
+  ast->body = ast->body ? scss_eval(ast->body, eval) : ast->body;
+
+  if (eval->callee && eval->callee != ast && eval->stack->size) {
+    list_push(eval->callee->footer->list_value, ast);
+    return init_scss_ast(AST_NOOP);
   }
 
   return ast;
 }
 
-scss_AST_T *scss_eval_prop_dec(scss_AST_T *ast) {
-  for (unsigned int i = 0; i < ast->list_value->size; i++) {
-    AST *child = (AST *)ast->list_value->items[i];
-    if (!child)
-      continue;
-    ast->list_value->items[i] = scss_eval(child);
+scss_AST_T *scss_eval_prop_dec(scss_AST_T *ast, eval_T *eval) {
+
+  if (ast->list_value) {
+    for (unsigned int i = 0; i < ast->list_value->size; i++) {
+      AST *child = (AST *)ast->list_value->items[i];
+      if (!child)
+        continue;
+      ast->list_value->items[i] = scss_eval(child, eval);
+    }
+  }
+
+  if (ast->left)
+    ast->left = scss_eval(ast->left, eval);
+  if (ast->value)
+    ast->value = scss_eval(ast->value, eval);
+
+  return ast;
+}
+
+scss_AST_T *scss_eval_name(scss_AST_T *ast, eval_T *eval) { return ast; }
+
+scss_AST_T *scss_eval_call(scss_AST_T *ast, eval_T *eval) {
+
+  if (ast->args) {
+    for (unsigned int i = 0; i < ast->args->size; i++) {
+      AST *child = (AST *)ast->args->items[i];
+      if (!child)
+        continue;
+
+      ast->args->items[i] = scss_eval(child, eval);
+    }
   }
 
   return ast;
 }
 
-scss_AST_T *scss_eval_name(scss_AST_T *ast) { return ast; }
+scss_AST_T *scss_eval_string(scss_AST_T *ast, eval_T *eval) { return ast; }
 
-scss_AST_T *scss_eval_string(scss_AST_T *ast) { return ast; }
+scss_AST_T *scss_eval_int(scss_AST_T *ast, eval_T *eval) { return ast; }
 
-scss_AST_T *scss_eval_int(scss_AST_T *ast) { return ast; }
+scss_AST_T *scss_eval_float(scss_AST_T *ast, eval_T *eval) { return ast; }
 
-scss_AST_T *scss_eval_float(scss_AST_T *ast) { return ast; }
+scss_AST_T *scss_eval_binop(scss_AST_T *ast, eval_T *eval) { return ast; }
 
-scss_AST_T *scss_eval_binop(scss_AST_T *ast) { return ast; }
-
-scss_AST_T *scss_eval_compound(scss_AST_T *ast) {
+scss_AST_T *scss_eval_compound(scss_AST_T *ast, eval_T *eval) {
   for (unsigned int i = 0; i < ast->list_value->size; i++) {
     AST *child = (AST *)ast->list_value->items[i];
     if (!child)
       continue;
-    ast->list_value->items[i] = scss_eval(child);
+
+    if (child->type == AST_STYLE_RULE && !eval->callee) {
+      eval->callee = child;
+    }
+    ast->list_value->items[i] = scss_eval(child, eval);
   }
 
   return ast;

@@ -11,7 +11,10 @@ int main(int argc, char *argv[]) {
   lexer_T *lexer = init_lexer(contents, argv[1]);
   scss_parser_T *parser = init_scss_parser(lexer);
   scss_AST_T *root = scss_parser_parse(parser);
-  root = scss_eval(root);
+
+  eval_T *eval = init_eval();
+
+  root = scss_eval(root, eval);
 
   char *result = scss_emit(root);
 
