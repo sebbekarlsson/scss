@@ -10,6 +10,8 @@ typedef struct EVAL_STRUCT {
 
 eval_T *init_eval();
 
+void eval_free(eval_T *eval);
+
 scss_AST_T *scss_eval(scss_AST_T *ast, eval_T *eval);
 scss_AST_T *scss_eval_style_rule(scss_AST_T *ast, eval_T *eval);
 scss_AST_T *scss_eval_prop_dec(scss_AST_T *ast, eval_T *eval);

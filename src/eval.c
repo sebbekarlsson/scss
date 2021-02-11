@@ -10,6 +10,14 @@ eval_T *init_eval() {
   return eval;
 }
 
+void eval_free(eval_T *eval) {
+  if (eval->stack) {
+    list_free_shallow(eval->stack);
+  }
+
+  free(eval);
+}
+
 scss_AST_T *scss_eval(scss_AST_T *ast, eval_T *eval) {
   if (!ast) {
     printf("[Eval] cannot evaluate nil ast.\n");
@@ -54,12 +62,23 @@ scss_AST_T *scss_eval(scss_AST_T *ast, eval_T *eval) {
 }
 
 scss_AST_T *scss_eval_style_rule(scss_AST_T *ast, eval_T *eval) {
+  list_T *tmp = init_list(sizeof(AST *));
+
   if (ast->list_value && eval->stack->size) {
     AST *last = (AST *)eval->stack->items[eval->stack->size - 1];
 
     if (last && last->list_value && last->list_value->size) {
-      for (unsigned int i = 0; i < last->list_value->size; i++) {
+      unsigned int len = ast->list_value->size;
+
+      for (unsigned int i = 0; i < len; i++) {
         AST *selector = (AST *)last->list_value->items[i];
+        if (selector->type == AST_BINOP &&
+            selector->token->type == TOKEN_COMMA) {
+          list_push(tmp, selector->left);
+          list_push(tmp, selector->right);
+          continue;
+        }
+
         list_prefix(ast->list_value, selector);
       }
     }
@@ -78,8 +97,24 @@ scss_AST_T *scss_eval_style_rule(scss_AST_T *ast, eval_T *eval) {
 
   if (eval->callee && eval->callee != ast && eval->stack->size) {
     list_push(eval->callee->footer->list_value, ast);
+
+    for (unsigned int i = 0; i < tmp->size; i++) {
+      list_T *rules = init_list(sizeof(AST *));
+      list_push(rules, tmp->items[i]);
+      list_T *merged = list_merge(rules, ast->list_value);
+      list_free_shallow(rules);
+      AST *style_rule = init_style_rule(merged, ast->body);
+      list_free_shallow(merged);
+      list_push(eval->callee->footer->list_value, style_rule);
+      ast->type = AST_NOOP;
+    }
+
+    list_free_shallow(tmp);
+
     return init_scss_ast(AST_NOOP);
   }
+
+  list_free_shallow(tmp);
 
   return ast;
 }

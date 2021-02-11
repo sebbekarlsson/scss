@@ -1,12 +1,16 @@
 #include "include/token.h"
+#include "include/garbage.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+extern scss_garbage_T *GARBAGE;
+
 scss_token_T *init_token(char *value, int type) {
   scss_token_T *token = calloc(1, sizeof(struct SCSS_TOKEN_STRUCT));
-  token->value = value;
+  token->value = value ? value : strdup("");
   token->type = type;
+  scss_garbage_mark_token(GARBAGE, token);
 
   return token;
 }

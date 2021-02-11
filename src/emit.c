@@ -169,6 +169,16 @@ char *scss_emit_style_rule(scss_AST_T *ast) {
   TEMPLATE(style_rule, str,
            strlen(leftstr) + strlen(bodystr) + strlen(footerstr), leftstr,
            bodystr, footerstr);
+
+  if (bodystr)
+    free(bodystr);
+
+  if (footerstr)
+    free(footerstr);
+
+  if (leftstr)
+    free(leftstr);
+
   return str ? str : strdup("");
 }
 
@@ -181,6 +191,12 @@ char *scss_emit_prop_dec(scss_AST_T *ast) {
   TEMPLATE(prop_dec, str, strlen(leftstr) + strlen(valuestr), leftstr,
            valuestr);
   str = str_append(&str, ";");
+
+  if (valuestr)
+    free(valuestr);
+  if (leftstr)
+    free(leftstr);
+
   return str ? str : strdup("");
 }
 
@@ -190,6 +206,11 @@ char *scss_emit_call(scss_AST_T *ast) {
   char *argsstr = ast->args ? emit_comma_list(ast->args) : strdup("");
 
   TEMPLATE(call, str, strlen(name) + strlen(argsstr), name, argsstr);
+
+  if (name)
+    free(name);
+  if (argsstr)
+    free(argsstr);
 
   return str ? str : strdup("");
 }
@@ -224,6 +245,13 @@ char *scss_emit_binop(scss_AST_T *ast) {
   str = str_append(&str, " ");
   str = str_append(&str, rightstr);
 
+  if (leftstr)
+    free(leftstr);
+  if (rightstr)
+    free(rightstr);
+  if (tokstr)
+    free(tokstr);
+
   return str ? str : strdup("");
 }
 
@@ -242,6 +270,9 @@ char *scss_emit_compound(scss_AST_T *ast) {
         continue;
 
       str = str_append(&str, childstr);
+
+      if (childstr)
+        free(childstr);
     }
   }
 

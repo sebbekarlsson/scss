@@ -1,10 +1,13 @@
 #include "include/parser.h"
 #include "include/AST.h"
+#include "include/garbage.h"
 #include <stdio.h>
 #include <string.h>
 
 #define AST scss_AST_T
 #define EAT(token_type) scss_parser_eat(parser, token_type)
+
+extern scss_garbage_T *GARBAGE;
 
 scss_parser_T *init_scss_parser(lexer_T *lexer) {
   scss_parser_T *parser = calloc(1, sizeof(struct SCSS_PARSER_STRUCT));
@@ -13,6 +16,8 @@ scss_parser_T *init_scss_parser(lexer_T *lexer) {
 
   return parser;
 }
+
+void parser_free(scss_parser_T *parser) { free(parser); }
 
 void scss_parser_eat(scss_parser_T *parser, int token_type) {
   if (parser->token->type != token_type) {
@@ -28,7 +33,6 @@ void scss_parser_eat(scss_parser_T *parser, int token_type) {
 
 AST *scss_parser_parse_style_rule(scss_parser_T *parser) {
   AST *ast = init_scss_ast(AST_STYLE_RULE);
-  ast->list_value = init_list(sizeof(AST *));
 
   AST *b = 0;
 
@@ -68,6 +72,8 @@ AST *scss_parser_parse_style_rule(scss_parser_T *parser) {
   } else {
     ast->type = AST_PROP_DEC;
     ast->left = b;
+    if (ast->list_value)
+      list_free_shallow(ast->list_value);
     ast->list_value = 0;
     ast->value = c;
     EAT(TOKEN_SEMI);
@@ -79,7 +85,6 @@ AST *scss_parser_parse_style_rule(scss_parser_T *parser) {
 
 AST *scss_parser_parse_prop_dec(scss_parser_T *parser) {
   AST *ast = init_scss_ast(AST_PROP_DEC);
-  ast->list_value = init_list(sizeof(AST *));
 
   AST *child = scss_parser_parse_expr(parser);
   list_push(ast->list_value, child);
@@ -182,8 +187,16 @@ AST *scss_parser_parse_expr(scss_parser_T *parser) {
          (parser->token->type == TOKEN_GT || parser->token->type == TOKEN_LT ||
           parser->token->type == TOKEN_TILDE ||
           parser->token->type == TOKEN_PLUS ||
-          parser->token->type == TOKEN_COMMA ||
           parser->token->type == TOKEN_AND)) {
+    AST *binop = init_scss_ast(AST_BINOP);
+    binop->left = left;
+    binop->token = token_clone(parser->token);
+    EAT(parser->token->type);
+    binop->right = scss_parser_parse_expr(parser);
+    left = binop;
+  }
+
+  while (left && parser->token->type == TOKEN_COMMA) {
     AST *binop = init_scss_ast(AST_BINOP);
     binop->left = left;
     binop->token = token_clone(parser->token);
@@ -204,14 +217,7 @@ AST *scss_parser_parse_statement(scss_parser_T *parser) {
 
   case TOKEN_AND:
   case TOKEN_ID:
-    //  if (lexer_peek_next_token(parser->lexer)->type == TOKEN_COLON)
-    // {
-    //  left = scss_parser_parse_prop_dec(parser);
-    //}
-    /// else
-    // {
     left = scss_parser_parse_style_rule(parser);
-    // }
   default: { /* noop */
   } break;
   }

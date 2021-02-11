@@ -10,6 +10,8 @@ typedef struct SCSS_PARSER_STRUCT {
 
 scss_parser_T *init_scss_parser(lexer_T *lexer);
 
+void parser_free(scss_parser_T *parser);
+
 void scss_parser_eat(scss_parser_T *parser, int token_type);
 
 scss_AST_T *scss_parser_parse(scss_parser_T *parser);

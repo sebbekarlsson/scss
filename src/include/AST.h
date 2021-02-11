@@ -33,8 +33,13 @@ typedef struct SCSS_AST_STRUCT {
   list_T *list_value;
   list_T *args;
   list_T *options;
+  list_T *copies;
 
 } scss_AST_T;
 
 scss_AST_T *init_scss_ast(int type);
+
+void scss_ast_free(scss_AST_T *ast);
+
+scss_AST_T *init_style_rule(list_T *selectors, scss_AST_T *body);
 #endif

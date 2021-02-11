@@ -17,8 +17,7 @@ char *lexer_str(lexer_T *lexer) {
 
 lexer_T *init_lexer(char *source, const char *filepath) {
   lexer_T *lexer = calloc(1, sizeof(struct SCSS_LEXER_STRUCT));
-  lexer->source = calloc(strlen(source) + 1, sizeof(char));
-  strcpy(lexer->source, source);
+  lexer->source = strdup(source);
   lexer->source_size = strlen(source);
   lexer->i = 0;
   lexer->c = lexer->source[lexer->i];
@@ -296,7 +295,7 @@ scss_token_T *lexer_next(lexer_T *lexer) {
     }
   }
 
-  return ret_tok(lexer, init_token(lexer->cstr, TOKEN_EOF));
+  return ret_tok(lexer, init_token(strdup(lexer->cstr), TOKEN_EOF));
 }
 
 scss_token_T *lexer_parse_id(lexer_T *lexer) {
@@ -407,17 +406,11 @@ scss_token_T *lexer_switch_id(lexer_T *lexer, scss_token_T *token) {
 }
 
 scss_token_T *ret_tok(lexer_T *lexer, scss_token_T *token) {
-  if (lexer->prev_token)
-    token_free(lexer->prev_token);
-
   lexer->prev_token = token_clone(token);
   return token;
 }
 
 void lexer_free(lexer_T *lexer) {
-  if (lexer->prev_token)
-    token_free(lexer->prev_token);
-
   if (lexer->source)
     free(lexer->source);
 
