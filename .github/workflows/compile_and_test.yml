@@ -9,11 +9,11 @@ jobs:
     
     steps:
     - uses: actions/checkout@v1
+    - name: create directories
+      run: mkdir -p $HOME/.local/include ; mkdir -p $HOME/.local/lib ; mkdir -p $HOME/.local/bin
     - name: make
       run: make ; sudo make install ; cp ./libscss.a tests/.
     - name: install dependencies
-      run: sudo apt-get update -y && sudo apt-get install --yes build-essential
-    - name: create directories
-      run: mkdir -p $HOME/.local/include ; mkdir -p $HOME/.local/lib ; mkdir -p $HOME/.local/bin
+      run: sudo apt-get update -y && sudo apt-get install --yes build-essential 
     - name: tests
       run: cd tests && make && ./test.out
