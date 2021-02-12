@@ -27,16 +27,16 @@ scss_AST_T* scss_eval(scss_AST_T* ast, eval_T* eval)
     exit(1);
   }
   switch (ast->type) {
-    case AST_STYLE_RULE: return scss_eval_style_rule(ast, eval); break;
-    case AST_PROP_DEC: return scss_eval_prop_dec(ast, eval); break;
-    case AST_CALL: return scss_eval_call(ast, eval); ;
-    case AST_NAME: return scss_eval_name(ast, eval); break;
-    case AST_STRING: return scss_eval_string(ast, eval); break;
-    case AST_INT: return scss_eval_int(ast, eval); break;
-    case AST_FLOAT: return scss_eval_float(ast, eval); break;
-    case AST_BINOP: return scss_eval_binop(ast, eval); break;
-    case AST_COMPOUND: return scss_eval_compound(ast, eval); break;
-    case AST_NOOP: return ast; break;
+    case SCSS_AST_STYLE_RULE: return scss_eval_style_rule(ast, eval); break;
+    case SCSS_AST_PROP_DEC: return scss_eval_prop_dec(ast, eval); break;
+    case SCSS_AST_CALL: return scss_eval_call(ast, eval); ;
+    case SCSS_AST_NAME: return scss_eval_name(ast, eval); break;
+    case SCSS_AST_STRING: return scss_eval_string(ast, eval); break;
+    case SCSS_AST_INT: return scss_eval_int(ast, eval); break;
+    case SCSS_AST_FLOAT: return scss_eval_float(ast, eval); break;
+    case SCSS_AST_BINOP: return scss_eval_binop(ast, eval); break;
+    case SCSS_AST_COMPOUND: return scss_eval_compound(ast, eval); break;
+    case SCSS_AST_NOOP: return ast; break;
     default: {
       printf("Cannot eval `%d`\n", ast->type);
       exit(1);
@@ -50,13 +50,15 @@ scss_AST_T* scss_eval_style_rule(scss_AST_T* ast, eval_T* eval)
 
   if (ast->list_value && eval->stack->size) {
     AST* last = (AST*)eval->stack->items[eval->stack->size - 1];
-
     if (last && last->list_value && last->list_value->size) {
       unsigned int len = ast->list_value->size;
 
       for (unsigned int i = 0; i < len; i++) {
         AST* selector = (AST*)last->list_value->items[i];
-        if (selector->type == AST_BINOP && selector->token->type == TOKEN_COMMA) {
+        if (!selector)
+          continue;
+
+        if (selector->type == SCSS_AST_BINOP && selector->token->type == SCSS_TOKEN_COMMA) {
           list_push(tmp, selector->left);
           list_push(tmp, selector->right);
           continue;
@@ -89,12 +91,12 @@ scss_AST_T* scss_eval_style_rule(scss_AST_T* ast, eval_T* eval)
       AST* style_rule = init_style_rule(merged, ast->body);
       list_free_shallow(merged);
       list_push(eval->callee->footer->list_value, style_rule);
-      ast->type = AST_NOOP;
+      ast->type = SCSS_AST_NOOP;
     }
 
     list_free_shallow(tmp);
 
-    return init_scss_ast(AST_NOOP);
+    return init_scss_ast(SCSS_AST_NOOP);
   }
 
   list_free_shallow(tmp);
@@ -170,7 +172,7 @@ scss_AST_T* scss_eval_compound(scss_AST_T* ast, eval_T* eval)
     if (!child)
       continue;
 
-    if (child->type == AST_STYLE_RULE && !eval->callee) {
+    if (child->type == SCSS_AST_STYLE_RULE && !eval->callee) {
       eval->callee = child;
     }
     ast->list_value->items[i] = scss_eval(child, eval);

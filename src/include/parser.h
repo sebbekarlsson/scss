@@ -5,13 +5,13 @@
 #include "token.h"
 typedef struct SCSS_PARSER_STRUCT
 {
-  lexer_T* lexer;
+  scss_lexer_T* lexer;
   scss_token_T* token;
 } scss_parser_T;
 
-scss_parser_T* init_scss_parser(lexer_T* lexer);
+scss_parser_T* init_scss_parser(scss_lexer_T* lexer);
 
-void parser_free(scss_parser_T* parser);
+void scss_parser_free(scss_parser_T* parser);
 
 void scss_parser_eat(scss_parser_T* parser, int token_type);
 

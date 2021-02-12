@@ -31,7 +31,7 @@ scss_AST_T* run_get_ast(const char* filepath)
   init_scss();
   char* source = scss_read_file(filepath);
 
-  lexer_T* lexer = init_lexer(source, filepath);
+  scss_lexer_T* lexer = init_scss_lexer(source, filepath);
   scss_parser_T* parser = init_scss_parser(lexer);
   scss_AST_T* root = scss_parser_parse(parser);
 
@@ -39,8 +39,8 @@ scss_AST_T* run_get_ast(const char* filepath)
 
   root = scss_eval(root, eval);
 
-  lexer_free(lexer);
-  parser_free(parser);
+  scss_lexer_free(lexer);
+  scss_parser_free(parser);
   eval_free(eval);
 
   return root;

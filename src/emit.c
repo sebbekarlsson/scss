@@ -12,7 +12,7 @@
   tmpname = calloc(_tmp_##template_name##_css_len + len + 128, sizeof(char));                      \
   sprintf(tmpname, (const char*)_tmp_##template_name##_css, __VA_ARGS__);
 
-char* emit_spaced_list(list_T* list_value)
+static char* emit_spaced_list(list_T* list_value)
 {
   if (!list_value)
     return strdup("");
@@ -40,7 +40,7 @@ char* emit_spaced_list(list_T* list_value)
   return str ? str : strdup("");
 }
 
-char* emit_comma_list(list_T* list_value)
+static char* emit_comma_list(list_T* list_value)
 {
   if (!list_value)
     return strdup(" ");
@@ -67,7 +67,7 @@ char* emit_comma_list(list_T* list_value)
   return str ? str : strdup("");
 }
 
-char* emit_colon_list(list_T* list_value)
+static char* emit_colon_list(list_T* list_value)
 {
   if (!list_value)
     return strdup(" ");
@@ -102,16 +102,16 @@ char* scss_emit(scss_AST_T* ast)
     exit(1);
   }
   switch (ast->type) {
-    case AST_STYLE_RULE: str = scss_emit_style_rule(ast); break;
-    case AST_PROP_DEC: str = scss_emit_prop_dec(ast); break;
-    case AST_CALL: str = scss_emit_call(ast); break;
-    case AST_NAME: str = scss_emit_name(ast); break;
-    case AST_STRING: str = scss_emit_string(ast); break;
-    case AST_INT: str = scss_emit_int(ast); break;
-    case AST_FLOAT: str = scss_emit_float(ast); break;
-    case AST_BINOP: str = scss_emit_binop(ast); break;
-    case AST_COMPOUND: str = scss_emit_compound(ast); break;
-    case AST_NOOP: str = strdup(""); break;
+    case SCSS_AST_STYLE_RULE: str = scss_emit_style_rule(ast); break;
+    case SCSS_AST_PROP_DEC: str = scss_emit_prop_dec(ast); break;
+    case SCSS_AST_CALL: str = scss_emit_call(ast); break;
+    case SCSS_AST_NAME: str = scss_emit_name(ast); break;
+    case SCSS_AST_STRING: str = scss_emit_string(ast); break;
+    case SCSS_AST_INT: str = scss_emit_int(ast); break;
+    case SCSS_AST_FLOAT: str = scss_emit_float(ast); break;
+    case SCSS_AST_BINOP: str = scss_emit_binop(ast); break;
+    case SCSS_AST_COMPOUND: str = scss_emit_compound(ast); break;
+    case SCSS_AST_NOOP: str = strdup(""); break;
     default: {
       printf("Cannot emit `%d`\n", ast->type);
       exit(1);

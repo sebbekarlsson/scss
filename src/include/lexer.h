@@ -12,40 +12,40 @@ typedef struct SCSS_LEXER_STRUCT
   int line;
   const char* filepath;
   scss_token_T* prev_token;
-} lexer_T;
+} scss_lexer_T;
 
-lexer_T* init_lexer(char* source, const char* filepath);
+scss_lexer_T* init_scss_lexer(char* source, const char* filepath);
 
-void lexer_advance(lexer_T* lexer);
+void scss_lexer_advance(scss_lexer_T* scss_lexer);
 
-void lexer_skip_whitespace(lexer_T* lexer);
+void scss_lexer_skip_whitespace(scss_lexer_T* scss_lexer);
 
-void lexer_skip_comment(lexer_T* lexer);
+void scss_lexer_skip_comment(scss_lexer_T* scss_lexer);
 
-char lexer_peek(lexer_T* lexer, int offset);
+char scss_lexer_peek(scss_lexer_T* scss_lexer, int offset);
 
-unsigned int lexer_check_regex(lexer_T* lexer);
+unsigned int scss_lexer_check_regex(scss_lexer_T* scss_lexer);
 
-scss_token_T* lexer_advance_token(lexer_T* lexer, scss_token_T* token);
+scss_token_T* scss_lexer_advance_token(scss_lexer_T* scss_lexer, scss_token_T* token);
 
-scss_token_T* lexer_next(lexer_T* lexer);
+scss_token_T* scss_lexer_next(scss_lexer_T* scss_lexer);
 
-scss_token_T* lexer_parse_id(lexer_T* lexer);
+scss_token_T* scss_lexer_parse_id(scss_lexer_T* scss_lexer);
 
-scss_token_T* lexer_parse_string(lexer_T* lexer);
+scss_token_T* scss_lexer_parse_string(scss_lexer_T* scss_lexer);
 
-scss_token_T* lexer_parse_number(lexer_T* lexer);
+scss_token_T* scss_lexer_parse_number(scss_lexer_T* scss_lexer);
 
-scss_token_T* lexer_parse_any(lexer_T* lexer, char stop_char, char stop_char2);
+scss_token_T* scss_lexer_parse_any(scss_lexer_T* scss_lexer, char stop_char, char stop_char2);
 
-scss_token_T* lexer_switch_id(lexer_T* lexer, scss_token_T* token);
+scss_token_T* scss_lexer_switch_id(scss_lexer_T* scss_lexer, scss_token_T* token);
 
-scss_token_T* ret_tok(lexer_T* lexer, scss_token_T* token);
+scss_token_T* scss_ret_tok(scss_lexer_T* scss_lexer, scss_token_T* token);
 
-lexer_T* lexer_copy(lexer_T* lexer);
+scss_lexer_T* scss_lexer_copy(scss_lexer_T* scss_lexer);
 
-scss_token_T* lexer_peek_next_token(lexer_T* lexer);
+scss_token_T* scss_lexer_peek_next_token(scss_lexer_T* scss_lexer);
 
-void lexer_free(lexer_T* lexer);
+void scss_lexer_free(scss_lexer_T* scss_lexer);
 
 #endif

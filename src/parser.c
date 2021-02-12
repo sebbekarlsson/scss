@@ -9,16 +9,16 @@
 
 extern scss_garbage_T* GARBAGE;
 
-scss_parser_T* init_scss_parser(lexer_T* lexer)
+scss_parser_T* init_scss_parser(scss_lexer_T* lexer)
 {
   scss_parser_T* parser = calloc(1, sizeof(struct SCSS_PARSER_STRUCT));
   parser->lexer = lexer;
-  parser->token = lexer_next(lexer);
+  parser->token = scss_lexer_next(lexer);
 
   return parser;
 }
 
-void parser_free(scss_parser_T* parser)
+void scss_parser_free(scss_parser_T* parser)
 {
   free(parser);
 }
@@ -30,7 +30,7 @@ void scss_parser_eat(scss_parser_T* parser, int token_type)
            parser->token->type, token_type);
     exit(1);
   } else {
-    parser->token = lexer_next(parser->lexer);
+    parser->token = scss_lexer_next(parser->lexer);
   }
 }
 
@@ -38,11 +38,11 @@ void scss_parser_eat(scss_parser_T* parser, int token_type)
 
 AST* scss_parser_parse_style_rule(scss_parser_T* parser)
 {
-  AST* ast = init_scss_ast(AST_STYLE_RULE);
+  AST* ast = init_scss_ast(SCSS_AST_STYLE_RULE);
 
   AST* b = 0;
 
-  while (parser->token->type != TOKEN_LBRACE && parser->token->type != TOKEN_COLON) {
+  while (parser->token->type != SCSS_TOKEN_LBRACE && parser->token->type != SCSS_TOKEN_COLON) {
     AST* child = scss_parser_parse_expr(parser);
     if (!b)
       b = child;
@@ -52,13 +52,13 @@ AST* scss_parser_parse_style_rule(scss_parser_T* parser)
   AST* c = 0;
 
   AST* prev = b;
-  while (parser->token->type == TOKEN_COLON) {
-    EAT(TOKEN_COLON);
+  while (parser->token->type == SCSS_TOKEN_COLON) {
+    EAT(SCSS_TOKEN_COLON);
     AST* child = scss_parser_parse_expr(parser);
     if (!c)
       c = child;
 
-    if (prev && child->type == AST_CALL) {
+    if (prev && child->type == SCSS_AST_CALL) {
       list_push(prev->options, child);
     } else {
       list_push(ast->list_value, child);
@@ -67,21 +67,21 @@ AST* scss_parser_parse_style_rule(scss_parser_T* parser)
     prev = child;
   }
 
-  if (parser->token->type == TOKEN_LBRACE) {
-    EAT(TOKEN_LBRACE);
-    if (parser->token->type != TOKEN_RBRACE) {
+  if (parser->token->type == SCSS_TOKEN_LBRACE) {
+    EAT(SCSS_TOKEN_LBRACE);
+    if (parser->token->type != SCSS_TOKEN_RBRACE) {
       ast->body = scss_parser_parse_style_rule_body(parser);
     }
 
-    EAT(TOKEN_RBRACE);
+    EAT(SCSS_TOKEN_RBRACE);
   } else {
-    ast->type = AST_PROP_DEC;
+    ast->type = SCSS_AST_PROP_DEC;
     ast->left = b;
     if (ast->list_value)
       list_free_shallow(ast->list_value);
     ast->list_value = 0;
     ast->value = c;
-    EAT(TOKEN_SEMI);
+    EAT(SCSS_TOKEN_SEMI);
     return ast;
   }
 
@@ -90,42 +90,42 @@ AST* scss_parser_parse_style_rule(scss_parser_T* parser)
 
 AST* scss_parser_parse_prop_dec(scss_parser_T* parser)
 {
-  AST* ast = init_scss_ast(AST_PROP_DEC);
+  AST* ast = init_scss_ast(SCSS_AST_PROP_DEC);
 
   AST* child = scss_parser_parse_expr(parser);
   list_push(ast->list_value, child);
 
-  EAT(TOKEN_COLON);
+  EAT(SCSS_TOKEN_COLON);
   ast->value = scss_parser_parse_expr(parser);
-  EAT(TOKEN_SEMI);
+  EAT(SCSS_TOKEN_SEMI);
 
   return ast;
 }
 
 AST* scss_parser_parse_name(scss_parser_T* parser)
 {
-  AST* ast = init_scss_ast(AST_NAME);
+  AST* ast = init_scss_ast(SCSS_AST_NAME);
   ast->name = strdup(parser->token->value);
-  scss_parser_eat(parser, TOKEN_ID);
+  scss_parser_eat(parser, SCSS_TOKEN_ID);
 
-  if (parser->token->type == TOKEN_LPAREN) {
-    EAT(TOKEN_LPAREN);
-    ast->type = AST_CALL;
+  if (parser->token->type == SCSS_TOKEN_LPAREN) {
+    EAT(SCSS_TOKEN_LPAREN);
+    ast->type = SCSS_AST_CALL;
 
-    if (parser->token->type != TOKEN_RPAREN) {
+    if (parser->token->type != SCSS_TOKEN_RPAREN) {
       AST* child = scss_parser_parse_factor(parser);
       list_push(ast->args, child);
 
-      while (parser->token->type == TOKEN_COMMA) {
-        if (parser->token->type == TOKEN_COMMA)
-          EAT(TOKEN_COMMA);
+      while (parser->token->type == SCSS_TOKEN_COMMA) {
+        if (parser->token->type == SCSS_TOKEN_COMMA)
+          EAT(SCSS_TOKEN_COMMA);
 
         child = scss_parser_parse_factor(parser);
         list_push(ast->args, child);
       }
     }
 
-    EAT(TOKEN_RPAREN);
+    EAT(SCSS_TOKEN_RPAREN);
   }
 
   return ast;
@@ -133,27 +133,27 @@ AST* scss_parser_parse_name(scss_parser_T* parser)
 
 AST* scss_parser_parse_string(scss_parser_T* parser)
 {
-  AST* ast = init_scss_ast(AST_STRING);
+  AST* ast = init_scss_ast(SCSS_AST_STRING);
   ast->string_value = strdup(parser->token->value);
-  scss_parser_eat(parser, TOKEN_STRING);
+  scss_parser_eat(parser, SCSS_TOKEN_STRING);
   return ast;
 }
 
 AST* scss_parser_parse_int(scss_parser_T* parser)
 {
-  AST* ast = init_scss_ast(AST_INT);
+  AST* ast = init_scss_ast(SCSS_AST_INT);
   ast->int_value = atoi(parser->token->value);
   ast->string_value = strdup(parser->token->value);
-  scss_parser_eat(parser, TOKEN_INT);
+  scss_parser_eat(parser, SCSS_TOKEN_INT);
   return ast;
 }
 
 AST* scss_parser_parse_float(scss_parser_T* parser)
 {
-  AST* ast = init_scss_ast(AST_FLOAT);
+  AST* ast = init_scss_ast(SCSS_AST_FLOAT);
   ast->float_value = atof(parser->token->value);
   ast->string_value = strdup(parser->token->value);
-  scss_parser_eat(parser, TOKEN_FLOAT);
+  scss_parser_eat(parser, SCSS_TOKEN_FLOAT);
   return ast;
 }
 
@@ -161,11 +161,11 @@ AST* scss_parser_parse_factor(scss_parser_T* parser)
 {
   AST* left = 0;
   switch (parser->token->type) {
-    case TOKEN_ID: left = scss_parser_parse_name(parser); break;
-    case TOKEN_STRING: left = scss_parser_parse_string(parser); break;
-    case TOKEN_INT: left = scss_parser_parse_int(parser); break;
-    case TOKEN_FLOAT: left = scss_parser_parse_float(parser); break;
-    default: left = init_scss_ast(AST_NOOP); break;
+    case SCSS_TOKEN_ID: left = scss_parser_parse_name(parser); break;
+    case SCSS_TOKEN_STRING: left = scss_parser_parse_string(parser); break;
+    case SCSS_TOKEN_INT: left = scss_parser_parse_int(parser); break;
+    case SCSS_TOKEN_FLOAT: left = scss_parser_parse_float(parser); break;
+    default: left = init_scss_ast(SCSS_AST_NOOP); break;
   }
 
   return left;
@@ -186,21 +186,22 @@ AST* scss_parser_parse_expr(scss_parser_T* parser)
 {
   AST* left = scss_parser_parse_term(parser);
 
-  while (left && (parser->token->type == TOKEN_GT || parser->token->type == TOKEN_LT ||
-                  parser->token->type == TOKEN_TILDE || parser->token->type == TOKEN_PLUS ||
-                  parser->token->type == TOKEN_AND)) {
-    AST* binop = init_scss_ast(AST_BINOP);
+  while (left &&
+         (parser->token->type == SCSS_TOKEN_GT || parser->token->type == SCSS_TOKEN_LT ||
+          parser->token->type == SCSS_TOKEN_TILDE || parser->token->type == SCSS_TOKEN_PLUS ||
+          parser->token->type == SCSS_TOKEN_AND)) {
+    AST* binop = init_scss_ast(SCSS_AST_BINOP);
     binop->left = left;
-    binop->token = token_clone(parser->token);
+    binop->token = scss_token_clone(parser->token);
     EAT(parser->token->type);
     binop->right = scss_parser_parse_expr(parser);
     left = binop;
   }
 
-  while (left && parser->token->type == TOKEN_COMMA) {
-    AST* binop = init_scss_ast(AST_BINOP);
+  while (left && parser->token->type == SCSS_TOKEN_COMMA) {
+    AST* binop = init_scss_ast(SCSS_AST_BINOP);
     binop->left = left;
-    binop->token = token_clone(parser->token);
+    binop->token = scss_token_clone(parser->token);
     EAT(parser->token->type);
     binop->right = scss_parser_parse_expr(parser);
     left = binop;
@@ -217,8 +218,8 @@ AST* scss_parser_parse_statement(scss_parser_T* parser)
 
   switch (parser->token->type) {
 
-    case TOKEN_AND:
-    case TOKEN_ID: left = scss_parser_parse_style_rule(parser);
+    case SCSS_TOKEN_AND:
+    case SCSS_TOKEN_ID: left = scss_parser_parse_style_rule(parser);
     default: { /* noop */
     } break;
   }
@@ -236,14 +237,14 @@ AST* scss_parser_parse_statement(scss_parser_T* parser)
 
 AST* scss_parser_parse_compound(scss_parser_T* parser)
 {
-  AST* ast = init_scss_ast(AST_COMPOUND);
+  AST* ast = init_scss_ast(SCSS_AST_COMPOUND);
 
   AST* child = scss_parser_parse_statement(parser);
   list_push(ast->list_value, child);
 
-  while (parser->token->type != TOKEN_EOF && child->type != AST_NOOP) {
-    if (parser->token->type == TOKEN_SEMI)
-      EAT(TOKEN_SEMI);
+  while (parser->token->type != SCSS_TOKEN_EOF && child->type != SCSS_AST_NOOP) {
+    if (parser->token->type == SCSS_TOKEN_SEMI)
+      EAT(SCSS_TOKEN_SEMI);
 
     child = scss_parser_parse_statement(parser);
     list_push(ast->list_value, child);
@@ -254,12 +255,12 @@ AST* scss_parser_parse_compound(scss_parser_T* parser)
 
 AST* scss_parser_parse_style_rule_body(scss_parser_T* parser)
 {
-  AST* ast = init_scss_ast(AST_COMPOUND);
+  AST* ast = init_scss_ast(SCSS_AST_COMPOUND);
 
   AST* child = scss_parser_parse_statement(parser);
   list_push(ast->list_value, child);
 
-  while (parser->token->type != TOKEN_RBRACE) {
+  while (parser->token->type != SCSS_TOKEN_RBRACE) {
     child = scss_parser_parse_statement(parser);
     list_push(ast->list_value, child);
   }

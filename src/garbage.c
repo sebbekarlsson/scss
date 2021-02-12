@@ -55,7 +55,7 @@ void scss_garbage_sweep(scss_garbage_T* garbage)
     if (!token)
       continue;
 
-    token_free(token);
+    scss_token_free(token);
   }
 
   list_free_shallow(garbage->asts);

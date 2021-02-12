@@ -7,16 +7,16 @@ typedef struct SCSS_AST_STRUCT
 {
   enum
   {
-    AST_NAME,
-    AST_STRING,
-    AST_FLOAT,
-    AST_INT,
-    AST_COMPOUND,
-    AST_STYLE_RULE,
-    AST_PROP_DEC,
-    AST_BINOP,
-    AST_CALL,
-    AST_NOOP,
+    SCSS_AST_NAME,
+    SCSS_AST_STRING,
+    SCSS_AST_FLOAT,
+    SCSS_AST_INT,
+    SCSS_AST_COMPOUND,
+    SCSS_AST_STYLE_RULE,
+    SCSS_AST_PROP_DEC,
+    SCSS_AST_BINOP,
+    SCSS_AST_CALL,
+    SCSS_AST_NOOP,
   } type;
 
   struct SCSS_AST_STRUCT* left;

@@ -7,385 +7,448 @@
 
 #define MIN(a, b) a > b ? b : a
 
-char* lexer_str(lexer_T* lexer)
+char* scss_lexer_str(scss_lexer_T* scss_lexer)
 {
   char* str = calloc(2, sizeof(char));
-  str[0] = lexer->c;
+  str[0] = scss_lexer->c;
   str[1] = '\0';
 
   return str;
 }
 
-lexer_T* init_lexer(char* source, const char* filepath)
+scss_lexer_T* init_scss_lexer(char* source, const char* filepath)
 {
-  lexer_T* lexer = calloc(1, sizeof(struct SCSS_LEXER_STRUCT));
-  lexer->source = strdup(source);
-  lexer->source_size = strlen(source);
-  lexer->i = 0;
-  lexer->c = lexer->source[lexer->i];
-  lexer->cstr[0] = lexer->c;
-  lexer->cstr[1] = '\0';
-  lexer->line = 1;
-  lexer->filepath = filepath;
+  scss_lexer_T* scss_lexer = calloc(1, sizeof(struct SCSS_LEXER_STRUCT));
+  scss_lexer->source = strdup(source);
+  scss_lexer->source_size = strlen(source);
+  scss_lexer->i = 0;
+  scss_lexer->c = scss_lexer->source[scss_lexer->i];
+  scss_lexer->cstr[0] = scss_lexer->c;
+  scss_lexer->cstr[1] = '\0';
+  scss_lexer->line = 1;
+  scss_lexer->filepath = filepath;
 
-  return lexer;
+  return scss_lexer;
 }
 
-void lexer_advance(lexer_T* lexer)
+void scss_lexer_advance(scss_lexer_T* scss_lexer)
 {
-  if (lexer->c == '\n') {
-    lexer->line += 1;
+  if (scss_lexer->c == '\n') {
+    scss_lexer->line += 1;
   }
 
-  if (lexer->c != '\0' && lexer->i < lexer->source_size) {
-    lexer->i += 1;
-    lexer->c = lexer->source[lexer->i];
+  if (scss_lexer->c != '\0' && scss_lexer->i < scss_lexer->source_size) {
+    scss_lexer->i += 1;
+    scss_lexer->c = scss_lexer->source[scss_lexer->i];
 
-    lexer->cstr[0] = lexer->c;
-    lexer->cstr[1] = '\0';
-  }
-}
-
-void lexer_skip_whitespace(lexer_T* lexer)
-{
-  while ((lexer->c == '\t' || lexer->c == 10 || lexer->c == ' ' || lexer->c == '\n' ||
-          lexer->c == '\r') &&
-         lexer->c != 0) {
-    lexer_advance(lexer);
+    scss_lexer->cstr[0] = scss_lexer->c;
+    scss_lexer->cstr[1] = '\0';
   }
 }
 
-void lexer_skip_comment(lexer_T* lexer)
+void scss_lexer_skip_whitespace(scss_lexer_T* scss_lexer)
 {
-  if (lexer->c == '/') {
-    if (lexer_peek(lexer, 1) == '/') {
-      while (lexer->c != '\n' && lexer->c != 0)
-        lexer_advance(lexer);
-    } else if (lexer_peek(lexer, 1) == '*') {
+  while ((scss_lexer->c == '\t' || scss_lexer->c == 10 || scss_lexer->c == ' ' ||
+          scss_lexer->c == '\n' || scss_lexer->c == '\r') &&
+         scss_lexer->c != 0) {
+    scss_lexer_advance(scss_lexer);
+  }
+}
+
+void scss_lexer_skip_comment(scss_lexer_T* scss_lexer)
+{
+  if (scss_lexer->c == '/') {
+    if (scss_lexer_peek(scss_lexer, 1) == '/') {
+      while (scss_lexer->c != '\n' && scss_lexer->c != 0)
+        scss_lexer_advance(scss_lexer);
+    } else if (scss_lexer_peek(scss_lexer, 1) == '*') {
       while (1) {
-        if (lexer->c == '*' && lexer_peek(lexer, 1) == '/') {
-          lexer_advance(lexer);
-          lexer_advance(lexer);
+        if (scss_lexer->c == '*' && scss_lexer_peek(scss_lexer, 1) == '/') {
+          scss_lexer_advance(scss_lexer);
+          scss_lexer_advance(scss_lexer);
           break;
         }
 
-        lexer_advance(lexer);
+        scss_lexer_advance(scss_lexer);
 
-        if (lexer->c == 0)
+        if (scss_lexer->c == 0)
           break;
       }
     }
   }
 
-  lexer_skip_whitespace(lexer);
+  scss_lexer_skip_whitespace(scss_lexer);
 }
 
-char lexer_peek(lexer_T* lexer, int offset)
+char scss_lexer_peek(scss_lexer_T* scss_lexer, int offset)
 {
-  return lexer->source[MIN(lexer->i + offset, lexer->source_size - 1)];
+  return scss_lexer->source[MIN(scss_lexer->i + offset, scss_lexer->source_size - 1)];
 }
 
-scss_token_T* lexer_advance_token(lexer_T* lexer, scss_token_T* token)
+scss_token_T* scss_lexer_advance_token(scss_lexer_T* scss_lexer, scss_token_T* token)
 {
-  lexer_advance(lexer);
-  return ret_tok(lexer, token);
+  scss_lexer_advance(scss_lexer);
+  return scss_ret_tok(scss_lexer, token);
 }
 
-scss_token_T* lexer_next(lexer_T* lexer)
+scss_token_T* scss_lexer_next(scss_lexer_T* scss_lexer)
 {
-  while (lexer->c != 0) {
-    lexer_skip_whitespace(lexer);
-    if (lexer->c == '\t' || lexer->c == 10 || lexer->c == ' ' || lexer->c == '\n' ||
-        lexer->c == '\r') {
-      lexer_skip_whitespace(lexer);
+  while (scss_lexer->c != 0) {
+    scss_lexer_skip_whitespace(scss_lexer);
+    if (scss_lexer->c == '\t' || scss_lexer->c == 10 || scss_lexer->c == ' ' ||
+        scss_lexer->c == '\n' || scss_lexer->c == '\r') {
+      scss_lexer_skip_whitespace(scss_lexer);
     }
 
-    if (lexer->c == '/') {
-      while (lexer_peek(lexer, 1) == '/' || lexer_peek(lexer, 1) == '*') {
-        lexer_skip_comment(lexer);
-        lexer_skip_whitespace(lexer);
+    if (scss_lexer->c == '/') {
+      while (scss_lexer_peek(scss_lexer, 1) == '/' || scss_lexer_peek(scss_lexer, 1) == '*') {
+        scss_lexer_skip_comment(scss_lexer);
+        scss_lexer_skip_whitespace(scss_lexer);
         continue;
       }
     }
 
-    if (isdigit(lexer->c) || (lexer->c == '.' && isdigit(lexer_peek(lexer, 1)))) {
-      return lexer_parse_number(lexer);
+    if (isdigit(scss_lexer->c) ||
+        (scss_lexer->c == '.' && isdigit(scss_lexer_peek(scss_lexer, 1)))) {
+      return scss_lexer_parse_number(scss_lexer);
     }
 
-    if (isalnum(lexer->c) || lexer->c == '_' || lexer->c == '$') {
-      return lexer_parse_id(lexer);
+    if (isalnum(scss_lexer->c) || scss_lexer->c == '_' || scss_lexer->c == '$') {
+      return scss_lexer_parse_id(scss_lexer);
     }
 
-    if (lexer->c == '"' || lexer->c == '\'' || lexer->c == '`') {
-      return lexer_parse_string(lexer);
+    if (scss_lexer->c == '"' || scss_lexer->c == '\'' || scss_lexer->c == '`') {
+      return scss_lexer_parse_string(scss_lexer);
     }
 
-    if (lexer->c == '=') {
-      if (lexer_peek(lexer, 1) == '>') {
-        scss_token_T* tok = lexer_advance_token(lexer, init_token(strdup("=>"), TOKEN_ARROW_RIGHT));
-        lexer_advance(lexer);
+    if (scss_lexer->c == '=') {
+      if (scss_lexer_peek(scss_lexer, 1) == '>') {
+        scss_token_T* tok = scss_lexer_advance_token(
+          scss_lexer, init_scss_token(strdup("=>"), SCSS_TOKEN_ARROW_RIGHT));
+        scss_lexer_advance(scss_lexer);
         return tok;
-      } else if (lexer_peek(lexer, 1) == '=' && lexer_peek(lexer, 2) == '=') {
+      } else if (scss_lexer_peek(scss_lexer, 1) == '=' && scss_lexer_peek(scss_lexer, 2) == '=') {
+        scss_token_T* tok = scss_lexer_advance_token(
+          scss_lexer, init_scss_token(strdup("==="), SCSS_TOKEN_EQUALS_EQUALS_EQUALS));
+        scss_lexer_advance(scss_lexer);
+        return scss_lexer_advance_token(scss_lexer, tok);
+      } else if (scss_lexer_peek(scss_lexer, 1) == '=') {
+        scss_token_T* tok = scss_lexer_advance_token(
+          scss_lexer, init_scss_token(strdup("=="), SCSS_TOKEN_EQUALS_EQUALS));
+        scss_lexer_advance(scss_lexer);
+        return tok;
+      }
+    }
+
+    if (scss_lexer->c == '!') {
+      if (scss_lexer_peek(scss_lexer, 1) == '=' && scss_lexer_peek(scss_lexer, 2) == '=') {
+        scss_token_T* tok = scss_lexer_advance_token(
+          scss_lexer, init_scss_token(strdup("!=="), SCSS_TOKEN_NOT_EQUALS_EQUALS));
+        scss_lexer_advance(scss_lexer);
+        return scss_lexer_advance_token(scss_lexer, tok);
+      } else if (scss_lexer_peek(scss_lexer, 1) == '=') {
+        scss_token_T* tok = scss_lexer_advance_token(
+          scss_lexer, init_scss_token(strdup("!="), SCSS_TOKEN_NOT_EQUALS));
+        scss_lexer_advance(scss_lexer);
+        return tok;
+      }
+    }
+
+    if (scss_lexer->c == '+') {
+      if (scss_lexer_peek(scss_lexer, 1) == '=') {
+        scss_token_T* tok = scss_lexer_advance_token(
+          scss_lexer, init_scss_token(strdup("+="), SCSS_TOKEN_PLUS_EQUALS));
+        scss_lexer_advance(scss_lexer);
+        return tok;
+      } else if (scss_lexer_peek(scss_lexer, 1) == '+') {
         scss_token_T* tok =
-          lexer_advance_token(lexer, init_token(strdup("==="), TOKEN_EQUALS_EQUALS_EQUALS));
-        lexer_advance(lexer);
-        return lexer_advance_token(lexer, tok);
-      } else if (lexer_peek(lexer, 1) == '=') {
+          scss_lexer_advance_token(scss_lexer, init_scss_token(strdup("++"), SCSS_TOKEN_INCREMENT));
+        scss_lexer_advance(scss_lexer);
+        return tok;
+      }
+    }
+
+    if (scss_lexer->c == '.') {
+      if (scss_lexer_peek(scss_lexer, 1) == '.' && scss_lexer_peek(scss_lexer, 2) == '.') {
         scss_token_T* tok =
-          lexer_advance_token(lexer, init_token(strdup("=="), TOKEN_EQUALS_EQUALS));
-        lexer_advance(lexer);
-        return tok;
+          scss_lexer_advance_token(scss_lexer, init_scss_token(strdup("..."), SCSS_TOKEN_SPREAD));
+        scss_lexer_advance(scss_lexer);
+        return scss_lexer_advance_token(scss_lexer, tok);
+      }
+      if (isalnum(scss_lexer_peek(scss_lexer, 1))) {
+        return scss_lexer_parse_id(scss_lexer);
       }
     }
 
-    if (lexer->c == '!') {
-      if (lexer_peek(lexer, 1) == '=' && lexer_peek(lexer, 2) == '=') {
+    if (scss_lexer->c == '<') {
+      if (scss_lexer_peek(scss_lexer, 1) == '=') {
         scss_token_T* tok =
-          lexer_advance_token(lexer, init_token(strdup("!=="), TOKEN_NOT_EQUALS_EQUALS));
-        lexer_advance(lexer);
-        return lexer_advance_token(lexer, tok);
-      } else if (lexer_peek(lexer, 1) == '=') {
-        scss_token_T* tok = lexer_advance_token(lexer, init_token(strdup("!="), TOKEN_NOT_EQUALS));
-        lexer_advance(lexer);
+          scss_lexer_advance_token(scss_lexer, init_scss_token(strdup(">="), SCSS_TOKEN_LT_EQUALS));
+        scss_lexer_advance(scss_lexer);
         return tok;
       }
     }
 
-    if (lexer->c == '+') {
-      if (lexer_peek(lexer, 1) == '=') {
-        scss_token_T* tok = lexer_advance_token(lexer, init_token(strdup("+="), TOKEN_PLUS_EQUALS));
-        lexer_advance(lexer);
+    if (scss_lexer->c == '-') {
+      if (scss_lexer_peek(scss_lexer, 1) == '=') {
+        scss_token_T* tok = scss_lexer_advance_token(
+          scss_lexer, init_scss_token(strdup("-="), SCSS_TOKEN_MINUS_EQUALS));
+        scss_lexer_advance(scss_lexer);
         return tok;
-      } else if (lexer_peek(lexer, 1) == '+') {
-        scss_token_T* tok = lexer_advance_token(lexer, init_token(strdup("++"), TOKEN_INCREMENT));
-        lexer_advance(lexer);
-        return tok;
-      }
-    }
-
-    if (lexer->c == '.') {
-      if (lexer_peek(lexer, 1) == '.' && lexer_peek(lexer, 2) == '.') {
-        scss_token_T* tok = lexer_advance_token(lexer, init_token(strdup("..."), TOKEN_SPREAD));
-        lexer_advance(lexer);
-        return lexer_advance_token(lexer, tok);
-      }
-      if (isalnum(lexer_peek(lexer, 1))) {
-        return lexer_parse_id(lexer);
-      }
-    }
-
-    if (lexer->c == '<') {
-      if (lexer_peek(lexer, 1) == '=') {
-        scss_token_T* tok = lexer_advance_token(lexer, init_token(strdup(">="), TOKEN_LT_EQUALS));
-        lexer_advance(lexer);
-        return tok;
-      }
-    }
-
-    if (lexer->c == '-') {
-      if (lexer_peek(lexer, 1) == '=') {
+      } else if (scss_lexer_peek(scss_lexer, 1) == '-') {
         scss_token_T* tok =
-          lexer_advance_token(lexer, init_token(strdup("-="), TOKEN_MINUS_EQUALS));
-        lexer_advance(lexer);
-        return tok;
-      } else if (lexer_peek(lexer, 1) == '-') {
-        scss_token_T* tok = lexer_advance_token(lexer, init_token(strdup("--"), TOKEN_DECREMENT));
-        lexer_advance(lexer);
+          scss_lexer_advance_token(scss_lexer, init_scss_token(strdup("--"), SCSS_TOKEN_DECREMENT));
+        scss_lexer_advance(scss_lexer);
         return tok;
       }
     }
 
-    if (lexer->c == '&') {
-      if (lexer_peek(lexer, 1) == '&') {
-        scss_token_T* tok = lexer_advance_token(lexer, init_token(strdup("&&"), TOKEN_AND_AND));
-        return lexer_advance_token(lexer, tok);
+    if (scss_lexer->c == '&') {
+      if (scss_lexer_peek(scss_lexer, 1) == '&') {
+        scss_token_T* tok =
+          scss_lexer_advance_token(scss_lexer, init_scss_token(strdup("&&"), SCSS_TOKEN_AND_AND));
+        return scss_lexer_advance_token(scss_lexer, tok);
       } else {
-        scss_token_T* tok = lexer_advance_token(lexer, init_token(strdup("&"), TOKEN_AND));
+        scss_token_T* tok =
+          scss_lexer_advance_token(scss_lexer, init_scss_token(strdup("&"), SCSS_TOKEN_AND));
         return tok;
       }
     }
 
-    switch (lexer->c) {
-      case '{': return lexer_advance_token(lexer, init_token(lexer_str(lexer), TOKEN_LBRACE));
-      case '}': return lexer_advance_token(lexer, init_token(lexer_str(lexer), TOKEN_RBRACE));
-      case '(': return lexer_advance_token(lexer, init_token(lexer_str(lexer), TOKEN_LPAREN));
-      case ')': return lexer_advance_token(lexer, init_token(lexer_str(lexer), TOKEN_RPAREN));
-      case '[': return lexer_advance_token(lexer, init_token(lexer_str(lexer), TOKEN_LBRACKET));
-      case ']': return lexer_advance_token(lexer, init_token(lexer_str(lexer), TOKEN_RBRACKET));
-      case ';': return lexer_advance_token(lexer, init_token(lexer_str(lexer), TOKEN_SEMI));
-      case '=': return lexer_advance_token(lexer, init_token(lexer_str(lexer), TOKEN_EQUALS));
-      case '<': return lexer_advance_token(lexer, init_token(lexer_str(lexer), TOKEN_LT));
-      case '>': return lexer_advance_token(lexer, init_token(lexer_str(lexer), TOKEN_GT));
-      case '.': return lexer_advance_token(lexer, init_token(lexer_str(lexer), TOKEN_DOT));
-      case ',': return lexer_advance_token(lexer, init_token(lexer_str(lexer), TOKEN_COMMA));
-      case ':': return lexer_advance_token(lexer, init_token(lexer_str(lexer), TOKEN_COLON));
-      case '!': return lexer_advance_token(lexer, init_token(lexer_str(lexer), TOKEN_NOT));
-      case '&': return lexer_advance_token(lexer, init_token(lexer_str(lexer), TOKEN_AND));
-      case '+': return lexer_advance_token(lexer, init_token(lexer_str(lexer), TOKEN_PLUS));
-      case '-': return lexer_advance_token(lexer, init_token(lexer_str(lexer), TOKEN_MINUS));
-      case '/': return lexer_advance_token(lexer, init_token(lexer_str(lexer), TOKEN_DIV));
-      case '%': return lexer_advance_token(lexer, init_token(lexer_str(lexer), TOKEN_MOD));
-      case '|': return lexer_advance_token(lexer, init_token(lexer_str(lexer), TOKEN_PIPE));
-      case '*': return lexer_advance_token(lexer, init_token(lexer_str(lexer), TOKEN_STAR));
-      case '?': return lexer_advance_token(lexer, init_token(lexer_str(lexer), TOKEN_QUESTION));
-      case '\\': return lexer_advance_token(lexer, init_token(lexer_str(lexer), TOKEN_ESCAPE));
-      case '#': return lexer_advance_token(lexer, init_token(lexer_str(lexer), TOKEN_HASH));
-      case '^': return lexer_advance_token(lexer, init_token(lexer_str(lexer), TOKEN_SQUARED));
-      case '~': return lexer_advance_token(lexer, init_token(lexer_str(lexer), TOKEN_TILDE));
+    switch (scss_lexer->c) {
+      case '{':
+        return scss_lexer_advance_token(
+          scss_lexer, init_scss_token(scss_lexer_str(scss_lexer), SCSS_TOKEN_LBRACE));
+      case '}':
+        return scss_lexer_advance_token(
+          scss_lexer, init_scss_token(scss_lexer_str(scss_lexer), SCSS_TOKEN_RBRACE));
+      case '(':
+        return scss_lexer_advance_token(
+          scss_lexer, init_scss_token(scss_lexer_str(scss_lexer), SCSS_TOKEN_LPAREN));
+      case ')':
+        return scss_lexer_advance_token(
+          scss_lexer, init_scss_token(scss_lexer_str(scss_lexer), SCSS_TOKEN_RPAREN));
+      case '[':
+        return scss_lexer_advance_token(
+          scss_lexer, init_scss_token(scss_lexer_str(scss_lexer), SCSS_TOKEN_LBRACKET));
+      case ']':
+        return scss_lexer_advance_token(
+          scss_lexer, init_scss_token(scss_lexer_str(scss_lexer), SCSS_TOKEN_RBRACKET));
+      case ';':
+        return scss_lexer_advance_token(
+          scss_lexer, init_scss_token(scss_lexer_str(scss_lexer), SCSS_TOKEN_SEMI));
+      case '=':
+        return scss_lexer_advance_token(
+          scss_lexer, init_scss_token(scss_lexer_str(scss_lexer), SCSS_TOKEN_EQUALS));
+      case '<':
+        return scss_lexer_advance_token(scss_lexer,
+                                        init_scss_token(scss_lexer_str(scss_lexer), SCSS_TOKEN_LT));
+      case '>':
+        return scss_lexer_advance_token(scss_lexer,
+                                        init_scss_token(scss_lexer_str(scss_lexer), SCSS_TOKEN_GT));
+      case '.':
+        return scss_lexer_advance_token(
+          scss_lexer, init_scss_token(scss_lexer_str(scss_lexer), SCSS_TOKEN_DOT));
+      case ',':
+        return scss_lexer_advance_token(
+          scss_lexer, init_scss_token(scss_lexer_str(scss_lexer), SCSS_TOKEN_COMMA));
+      case ':':
+        return scss_lexer_advance_token(
+          scss_lexer, init_scss_token(scss_lexer_str(scss_lexer), SCSS_TOKEN_COLON));
+      case '!':
+        return scss_lexer_advance_token(
+          scss_lexer, init_scss_token(scss_lexer_str(scss_lexer), SCSS_TOKEN_NOT));
+      case '&':
+        return scss_lexer_advance_token(
+          scss_lexer, init_scss_token(scss_lexer_str(scss_lexer), SCSS_TOKEN_AND));
+      case '+':
+        return scss_lexer_advance_token(
+          scss_lexer, init_scss_token(scss_lexer_str(scss_lexer), SCSS_TOKEN_PLUS));
+      case '-':
+        return scss_lexer_advance_token(
+          scss_lexer, init_scss_token(scss_lexer_str(scss_lexer), SCSS_TOKEN_MINUS));
+      case '/':
+        return scss_lexer_advance_token(
+          scss_lexer, init_scss_token(scss_lexer_str(scss_lexer), SCSS_TOKEN_DIV));
+      case '%':
+        return scss_lexer_advance_token(
+          scss_lexer, init_scss_token(scss_lexer_str(scss_lexer), SCSS_TOKEN_MOD));
+      case '|':
+        return scss_lexer_advance_token(
+          scss_lexer, init_scss_token(scss_lexer_str(scss_lexer), SCSS_TOKEN_PIPE));
+      case '*':
+        return scss_lexer_advance_token(
+          scss_lexer, init_scss_token(scss_lexer_str(scss_lexer), SCSS_TOKEN_STAR));
+      case '?':
+        return scss_lexer_advance_token(
+          scss_lexer, init_scss_token(scss_lexer_str(scss_lexer), SCSS_TOKEN_QUESTION));
+      case '\\':
+        return scss_lexer_advance_token(
+          scss_lexer, init_scss_token(scss_lexer_str(scss_lexer), SCSS_TOKEN_ESCAPE));
+      case '#':
+        return scss_lexer_advance_token(
+          scss_lexer, init_scss_token(scss_lexer_str(scss_lexer), SCSS_TOKEN_HASH));
+      case '^':
+        return scss_lexer_advance_token(
+          scss_lexer, init_scss_token(scss_lexer_str(scss_lexer), SCSS_TOKEN_SQUARED));
+      case '~':
+        return scss_lexer_advance_token(
+          scss_lexer, init_scss_token(scss_lexer_str(scss_lexer), SCSS_TOKEN_TILDE));
       case '\0': break;
     }
 
-    if (lexer->c != 0) {
-      printf("[Lexer]: Unexpected token (%s):%d: `%c` (%d)\n", lexer->filepath, lexer->line,
-             lexer->c, (int)lexer->c);
+    if (scss_lexer->c != 0) {
+      printf("[Lexer]: Unexpected token (%s):%d: `%c` (%d)\n", scss_lexer->filepath,
+             scss_lexer->line, scss_lexer->c, (int)scss_lexer->c);
       break;
     }
   }
 
-  return ret_tok(lexer, init_token(strdup(lexer->cstr), TOKEN_EOF));
+  return scss_ret_tok(scss_lexer, init_scss_token(strdup(scss_lexer->cstr), SCSS_TOKEN_EOF));
 }
 
-scss_token_T* lexer_parse_id(lexer_T* lexer)
+scss_token_T* scss_lexer_parse_id(scss_lexer_T* scss_lexer)
 {
   char* str = strdup("");
 
-  if (lexer->c == '.') {
-    str = str_append(&str, lexer->cstr);
-    lexer_advance(lexer);
+  if (scss_lexer->c == '.') {
+    str = str_append(&str, scss_lexer->cstr);
+    scss_lexer_advance(scss_lexer);
   }
 
-  while (isalnum(lexer->c) || isdigit(lexer->c) || lexer->c == '_' || lexer->c == '$' ||
-         lexer->c == '-' || lexer->c == '.') {
-    str = str_append(&str, lexer->cstr);
-    lexer_advance(lexer);
+  while (isalnum(scss_lexer->c) || isdigit(scss_lexer->c) || scss_lexer->c == '_' ||
+         scss_lexer->c == '$' || scss_lexer->c == '-' || scss_lexer->c == '.') {
+    str = str_append(&str, scss_lexer->cstr);
+    scss_lexer_advance(scss_lexer);
   }
 
-  return lexer_switch_id(lexer, init_token(str, TOKEN_ID));
+  return scss_lexer_switch_id(scss_lexer, init_scss_token(str, SCSS_TOKEN_ID));
 }
 
-scss_token_T* lexer_parse_string(lexer_T* lexer)
+scss_token_T* scss_lexer_parse_string(scss_lexer_T* scss_lexer)
 {
   char* str = 0;
-  char start = lexer->c;
+  char start = scss_lexer->c;
 
-  lexer_advance(lexer);
+  scss_lexer_advance(scss_lexer);
 
-  while (lexer->c != 0 && lexer->c != start) {
-    if (lexer->c == '\\') {
+  while (scss_lexer->c != 0 && scss_lexer->c != start) {
+    if (scss_lexer->c == '\\') {
       str = str_append(&str, "\\");
-      lexer_advance(lexer);
-      str = str_append(&str, lexer->cstr);
-      lexer_advance(lexer);
+      scss_lexer_advance(scss_lexer);
+      str = str_append(&str, scss_lexer->cstr);
+      scss_lexer_advance(scss_lexer);
       continue;
     }
-    if (lexer->c == start) {
+    if (scss_lexer->c == start) {
       break;
     } else {
-      if (lexer->c == '"' && start == '\'') {
+      if (scss_lexer->c == '"' && start == '\'') {
         str = str_append(&str, "\\");
       }
-      str = str_append(&str, lexer->cstr);
-      lexer_advance(lexer);
+      str = str_append(&str, scss_lexer->cstr);
+      scss_lexer_advance(scss_lexer);
     }
   }
 
-  if (lexer->c == start)
-    lexer_advance(lexer);
+  if (scss_lexer->c == start)
+    scss_lexer_advance(scss_lexer);
 
-  scss_token_T* token = init_token(str ? str : strdup(""), TOKEN_STRING);
+  scss_token_T* token = init_scss_token(str ? str : strdup(""), SCSS_TOKEN_STRING);
   token->c = start;
-  return ret_tok(lexer, token);
+  return scss_ret_tok(scss_lexer, token);
 }
 
-scss_token_T* lexer_parse_number(lexer_T* lexer)
+scss_token_T* scss_lexer_parse_number(scss_lexer_T* scss_lexer)
 {
   char* str = 0;
-  int type = TOKEN_INT;
+  int type = SCSS_TOKEN_INT;
 
-  if (lexer->c == '.') {
+  if (scss_lexer->c == '.') {
     str = str_append(&str, "0");
-    str = str_append(&str, lexer->cstr);
-    lexer_advance(lexer);
+    str = str_append(&str, scss_lexer->cstr);
+    scss_lexer_advance(scss_lexer);
   }
 
-  if (isdigit(lexer->c) && (lexer_peek(lexer, 1) == 'e' || lexer_peek(lexer, 1) == 'E')) {
-    type = TOKEN_INT_MIN;
+  if (isdigit(scss_lexer->c) &&
+      (scss_lexer_peek(scss_lexer, 1) == 'e' || scss_lexer_peek(scss_lexer, 1) == 'E')) {
+    type = SCSS_TOKEN_INT_MIN;
 
-    while (isdigit(lexer->c) || lexer->c == 'e' || lexer->c == 'E') {
-      str = str_append(&str, lexer->cstr);
-      lexer_advance(lexer);
+    while (isdigit(scss_lexer->c) || scss_lexer->c == 'e' || scss_lexer->c == 'E') {
+      str = str_append(&str, scss_lexer->cstr);
+      scss_lexer_advance(scss_lexer);
     }
   } else {
-    while (isdigit(lexer->c) || lexer->c == 'e') {
-      str = str_append(&str, lexer->cstr);
-      lexer_advance(lexer);
+    while (isdigit(scss_lexer->c) || scss_lexer->c == 'e') {
+      str = str_append(&str, scss_lexer->cstr);
+      scss_lexer_advance(scss_lexer);
     }
 
-    if (lexer->c == '.') {
-      type = TOKEN_FLOAT;
+    if (scss_lexer->c == '.') {
+      type = SCSS_TOKEN_FLOAT;
 
-      str = str_append(&str, lexer->cstr);
-      lexer_advance(lexer);
+      str = str_append(&str, scss_lexer->cstr);
+      scss_lexer_advance(scss_lexer);
 
-      while (isdigit(lexer->c) || lexer->c == 'e') {
+      while (isdigit(scss_lexer->c) || scss_lexer->c == 'e') {
 
-        if (lexer->c == 'e' && lexer_peek(lexer, 1) == '+') {
-          str = str_append(&str, lexer->cstr);
+        if (scss_lexer->c == 'e' && scss_lexer_peek(scss_lexer, 1) == '+') {
+          str = str_append(&str, scss_lexer->cstr);
           str = str_append(&str, "+");
-          lexer_advance(lexer);
-          lexer_advance(lexer);
+          scss_lexer_advance(scss_lexer);
+          scss_lexer_advance(scss_lexer);
 
           continue;
         }
 
-        str = str_append(&str, lexer->cstr);
-        lexer_advance(lexer);
+        str = str_append(&str, scss_lexer->cstr);
+        scss_lexer_advance(scss_lexer);
       }
     }
   }
 
-  return ret_tok(lexer, init_token(str, type));
+  return scss_ret_tok(scss_lexer, init_scss_token(str, type));
 }
 
-scss_token_T* lexer_switch_id(lexer_T* lexer, scss_token_T* token)
+scss_token_T* scss_lexer_switch_id(scss_lexer_T* scss_lexer, scss_token_T* token)
 {
   if (strcmp(token->value, "important") == 0)
-    token->type = TOKEN_IMPORTANT;
+    token->type = SCSS_TOKEN_IMPORTANT;
 
-  return ret_tok(lexer, token);
+  return scss_ret_tok(scss_lexer, token);
 }
 
-scss_token_T* ret_tok(lexer_T* lexer, scss_token_T* token)
+scss_token_T* scss_ret_tok(scss_lexer_T* scss_lexer, scss_token_T* token)
 {
-  lexer->prev_token = token_clone(token);
+  scss_lexer->prev_token = scss_token_clone(token);
   return token;
 }
 
-void lexer_free(lexer_T* lexer)
+void scss_lexer_free(scss_lexer_T* scss_lexer)
 {
-  if (lexer->source)
-    free(lexer->source);
+  if (scss_lexer->source)
+    free(scss_lexer->source);
 
-  free(lexer);
+  free(scss_lexer);
 }
 
-lexer_T* lexer_copy(lexer_T* lexer)
+scss_lexer_T* scss_lexer_copy(scss_lexer_T* scss_lexer)
 {
-  lexer_T* lex = init_lexer(lexer->source, lexer->filepath);
-  lex->c = lexer->c;
-  lex->i = lexer->i;
-  lex->line = lexer->line;
-  lex->prev_token = token_clone(lexer->prev_token);
-  memcpy(lex->cstr, lexer->cstr, sizeof(lexer->cstr));
+  scss_lexer_T* lex = init_scss_lexer(scss_lexer->source, scss_lexer->filepath);
+  lex->c = scss_lexer->c;
+  lex->i = scss_lexer->i;
+  lex->line = scss_lexer->line;
+  lex->prev_token = scss_token_clone(scss_lexer->prev_token);
+  memcpy(lex->cstr, scss_lexer->cstr, sizeof(scss_lexer->cstr));
 
   return lex;
 }
 
-scss_token_T* lexer_peek_next_token(lexer_T* lexer)
+scss_token_T* scss_lexer_peek_next_token(scss_lexer_T* scss_lexer)
 {
-  lexer_T* copy = lexer_copy(lexer);
-  scss_token_T* next_token = lexer_next(copy);
-  lexer_free(copy);
+  scss_lexer_T* copy = scss_lexer_copy(scss_lexer);
+  scss_token_T* next_token = scss_lexer_next(copy);
+  scss_lexer_free(copy);
 
   return next_token;
 }
