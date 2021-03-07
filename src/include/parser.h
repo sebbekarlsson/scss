@@ -19,6 +19,12 @@ scss_AST_T* scss_parser_parse(scss_parser_T* parser);
 
 scss_AST_T* scss_parser_parse_name(scss_parser_T* parser);
 
+scss_AST_T* scss_parser_parse_rule(scss_parser_T* parser);
+
+scss_AST_T* scss_parser_parse_var(scss_parser_T* parser);
+
+scss_AST_T* scss_parser_parse_import(scss_parser_T* parser);
+
 scss_AST_T* scss_parser_parse_string(scss_parser_T* parser);
 
 scss_AST_T* scss_parser_parse_int(scss_parser_T* parser);

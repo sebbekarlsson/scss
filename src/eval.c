@@ -29,13 +29,15 @@ scss_AST_T* scss_eval(scss_AST_T* ast, eval_T* eval)
   switch (ast->type) {
     case SCSS_AST_STYLE_RULE: return scss_eval_style_rule(ast, eval); break;
     case SCSS_AST_PROP_DEC: return scss_eval_prop_dec(ast, eval); break;
-    case SCSS_AST_CALL: return scss_eval_call(ast, eval); ;
+    case SCSS_AST_CALL: return scss_eval_call(ast, eval); break;
+    case SCSS_AST_VAR:
     case SCSS_AST_NAME: return scss_eval_name(ast, eval); break;
     case SCSS_AST_STRING: return scss_eval_string(ast, eval); break;
     case SCSS_AST_INT: return scss_eval_int(ast, eval); break;
     case SCSS_AST_FLOAT: return scss_eval_float(ast, eval); break;
     case SCSS_AST_BINOP: return scss_eval_binop(ast, eval); break;
     case SCSS_AST_COMPOUND: return scss_eval_compound(ast, eval); break;
+    case SCSS_AST_IMPORT:
     case SCSS_AST_NOOP: return ast; break;
     default: {
       printf("Cannot eval `%d`\n", ast->type);

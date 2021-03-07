@@ -1,5 +1,6 @@
 #include "include/emit.h"
 #include "include/css/call.css.h"
+#include "include/css/import.css.h"
 #include "include/css/prop_dec.css.h"
 #include "include/css/style_rule.css.h"
 #include "include/string_utils.h"
@@ -20,6 +21,37 @@ static char* emit_spaced_list(list_T* list_value)
   char* str = 0;
 
   list_T* living = list_value;
+
+  for (unsigned int i = 0; i < living->size; i++) {
+    AST* child = (AST*)living->items[i];
+
+    char* child_str = scss_emit(child);
+
+    if (!child_str)
+      continue;
+
+    str = str_append(&str, child_str);
+
+    if (i < living->size - 1)
+      str = str_append(&str, " ");
+
+    free(child_str);
+  }
+
+  return str ? str : strdup("");
+}
+
+static char* emit_spaced_list2(list_T* list_value)
+{
+  if (!list_value)
+    return strdup("");
+
+  char* str = 0;
+
+  list_T* living = list_value;
+
+  if (living->size == 1)
+    str = str_append(&str, " ");
 
   for (unsigned int i = 0; i < living->size; i++) {
     AST* child = (AST*)living->items[i];
@@ -101,16 +133,22 @@ char* scss_emit(scss_AST_T* ast)
     printf("Cannot emit nil scss ast.\n");
     exit(1);
   }
+
+  if (ast->capsulated)
+    str = str_append(&str, "(");
+
   switch (ast->type) {
-    case SCSS_AST_STYLE_RULE: str = scss_emit_style_rule(ast); break;
-    case SCSS_AST_PROP_DEC: str = scss_emit_prop_dec(ast); break;
-    case SCSS_AST_CALL: str = scss_emit_call(ast); break;
-    case SCSS_AST_NAME: str = scss_emit_name(ast); break;
-    case SCSS_AST_STRING: str = scss_emit_string(ast); break;
-    case SCSS_AST_INT: str = scss_emit_int(ast); break;
-    case SCSS_AST_FLOAT: str = scss_emit_float(ast); break;
-    case SCSS_AST_BINOP: str = scss_emit_binop(ast); break;
-    case SCSS_AST_COMPOUND: str = scss_emit_compound(ast); break;
+    case SCSS_AST_STYLE_RULE: str = str_append(&str, scss_emit_style_rule(ast)); break;
+    case SCSS_AST_PROP_DEC: str = str_append(&str, scss_emit_prop_dec(ast)); break;
+    case SCSS_AST_CALL: str = str_append(&str, scss_emit_call(ast)); break;
+    case SCSS_AST_NAME: str = str_append(&str, scss_emit_name(ast)); break;
+    case SCSS_AST_VAR: str = str_append(&str, scss_emit_var(ast)); break;
+    case SCSS_AST_IMPORT: str = str_append(&str, scss_emit_import(ast)); break;
+    case SCSS_AST_STRING: str = str_append(&str, scss_emit_string(ast)); break;
+    case SCSS_AST_INT: str = str_append(&str, scss_emit_int(ast)); break;
+    case SCSS_AST_FLOAT: str = str_append(&str, scss_emit_float(ast)); break;
+    case SCSS_AST_BINOP: str = str_append(&str, scss_emit_binop(ast)); break;
+    case SCSS_AST_COMPOUND: str = str_append(&str, scss_emit_compound(ast)); break;
     case SCSS_AST_NOOP: str = strdup(""); break;
     default: {
       printf("Cannot emit `%d`\n", ast->type);
@@ -126,6 +164,27 @@ char* scss_emit(scss_AST_T* ast)
       free(optstr);
     }
   }
+
+  if (ast->typedata) {
+    char* typedatastr = scss_emit(ast->typedata);
+
+    if (typedatastr) {
+      str = str_append(&str, typedatastr);
+      free(typedatastr);
+    }
+  }
+
+  if (ast->flags && str) {
+    char* flagsstr = emit_spaced_list2(ast->flags);
+
+    if (flagsstr) {
+      str = str_append(&str, flagsstr);
+      free(flagsstr);
+    }
+  }
+
+  if (ast->capsulated)
+    str = str_append(&str, ")");
 
   return str ? str : strdup("");
 }
@@ -166,10 +225,11 @@ char* scss_emit_style_rule(scss_AST_T* ast)
 char* scss_emit_prop_dec(scss_AST_T* ast)
 {
   char* str = 0;
-  char* leftstr = ast->list_value ? emit_spaced_list(ast->list_value)
-                  : ast->left     ? scss_emit(ast->left)
-                                  : strdup("");
+  char* leftstr = ast->list_value && ast->list_value->size ? emit_spaced_list(ast->list_value)
+                  : ast->left                              ? scss_emit(ast->left)
+                                                           : strdup("");
   char* valuestr = scss_emit(ast->value);
+
   TEMPLATE(prop_dec, str, strlen(leftstr) + strlen(valuestr), leftstr, valuestr);
   str = str_append(&str, ";");
 
@@ -200,6 +260,26 @@ char* scss_emit_call(scss_AST_T* ast)
 char* scss_emit_name(scss_AST_T* ast)
 {
   return strdup(ast->name);
+}
+
+char* scss_emit_var(scss_AST_T* ast)
+{
+  return strdup(ast->name);
+}
+
+char* scss_emit_import(scss_AST_T* ast)
+{
+  if (!ast->value)
+    return strdup("");
+  char* valuestr = scss_emit(ast->value);
+
+  char* str = 0;
+
+  TEMPLATE(import, str, strlen(valuestr), valuestr);
+
+  str = str_append(&str, "\n");
+
+  return str;
 }
 
 char* scss_emit_string(scss_AST_T* ast)
@@ -262,6 +342,9 @@ char* scss_emit_compound(scss_AST_T* ast)
 
       if (!childstr)
         continue;
+
+      if (child->type == SCSS_AST_IMPORT)
+        str = str_append(&str, "\n");
 
       str = str_append(&str, childstr);
 
