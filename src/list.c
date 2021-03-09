@@ -71,12 +71,18 @@ void list_push_safe_at(list_T* list, void* item, void* ptr)
 
 void list_shift_left(list_T* list, int index)
 {
+  if (!list->size)
+    return;
+
   for (int i = index; i < list->size - 1; i++)
     list->items[i] = list->items[i + 1];
 }
 
 void list_shift_right(list_T* list, int index)
 {
+  if (!list->size)
+    return;
+
   for (int i = list->size - 1; i >= index; i--) {
     list->items[MIN(list->size - 1, i + 1)] = list->items[i];
     list->items[i] = 0;
@@ -85,6 +91,9 @@ void list_shift_right(list_T* list, int index)
 
 void list_remove(list_T* list, void* element, void (*free_method)(void* item))
 {
+  if (!list->size)
+    return;
+
   int index = 0;
 
   if (element == (void*)0)
@@ -108,6 +117,28 @@ void list_remove(list_T* list, void* element, void (*free_method)(void* item))
   }
   list->size = list->size - 1;
   list->items = tmp;
+}
+
+void* list_pop(list_T* list)
+{
+  if (!list->size)
+    return 0;
+
+  void* ptr = list->items[list->size - 1];
+
+  if (!ptr)
+    return 0;
+
+  list_shift_left(list, list->size - 1); /* First shift the elements, then reallocate */
+  void* tmp = realloc(list->items, (list->size - 1) * list->item_size);
+  if (tmp == NULL && list->size > 1) {
+    /* No memory available */
+    exit(EXIT_FAILURE);
+  }
+  list->size = list->size - 1;
+  list->items = tmp;
+
+  return ptr;
 }
 
 void list_prefix(list_T* list, void* item)

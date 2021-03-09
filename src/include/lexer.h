@@ -32,6 +32,8 @@ scss_token_T* scss_lexer_next(scss_lexer_T* scss_lexer);
 
 scss_token_T* scss_lexer_parse_id(scss_lexer_T* scss_lexer);
 
+scss_token_T* scss_lexer_parse_rule(scss_lexer_T* scss_lexer);
+
 scss_token_T* scss_lexer_parse_string(scss_lexer_T* scss_lexer);
 
 scss_token_T* scss_lexer_parse_number(scss_lexer_T* scss_lexer);

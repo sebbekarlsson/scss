@@ -8,11 +8,13 @@ scss_AST_T* init_scss_ast(int type)
   scss_AST_T* ast = calloc(1, sizeof(struct SCSS_AST_STRUCT));
   ast->type = type;
 
-  if (ast->type == SCSS_AST_STYLE_RULE)
+  if (ast->type == SCSS_AST_STYLE_RULE) {
     ast->footer = init_scss_ast(SCSS_AST_COMPOUND);
+    ast->siblings = init_list(sizeof(scss_AST_T*));
+  }
 
   if (ast->type == SCSS_AST_COMPOUND || ast->type == SCSS_AST_STYLE_RULE ||
-      ast->type == SCSS_AST_PROP_DEC) {
+      ast->type == SCSS_AST_PROP_DEC || ast->type == SCSS_AST_MEDIA_QUERY) {
     ast->list_value = init_list(sizeof(scss_AST_T*));
   }
 
@@ -54,4 +56,71 @@ scss_AST_T* init_style_rule(list_T* selectors, scss_AST_T* body)
   ast->body = body;
 
   return ast;
+}
+
+unsigned int ast_has_properties(scss_AST_T* ast)
+{
+  if (!ast)
+    return 0;
+  if (!ast->body)
+    return 0;
+  if (!ast->body->list_value)
+    return 0;
+  if (!ast->body->list_value->size)
+    return 0;
+
+  for (unsigned int i = 0; i < ast->body->list_value->size; i++) {
+    scss_AST_T* child = (scss_AST_T*)ast->body->list_value->items[i];
+    if (!child)
+      continue;
+    if (child->type == SCSS_AST_PROP_DEC)
+      return 1;
+  }
+
+  return 0;
+}
+
+list_T* ast_get_parents(scss_AST_T* ast)
+{
+  list_T* list = init_list(sizeof(scss_AST_T*));
+
+  if (!ast)
+    return list;
+
+  scss_AST_T* parent = ast->parent;
+
+  while (parent) {
+    list_push(list, parent);
+    parent = parent->parent;
+  }
+
+  return list;
+}
+
+list_T* ast_get_children(scss_AST_T* ast)
+{
+  list_T* list = init_list(sizeof(scss_AST_T*));
+
+  if (!ast)
+    return list;
+  if (!ast->body)
+    return list;
+  if (!ast->body->list_value)
+    return list;
+  list_T* children = ast->body->list_value;
+
+  for (unsigned int i = 0; i < children->size; i++) {
+    scss_AST_T* child = (scss_AST_T*)children->items[i];
+
+    if (child->type != SCSS_AST_STYLE_RULE)
+      continue;
+
+    list_push(list, child);
+
+    list_T* x = ast_get_children(child);
+
+    list = list_merge(list, x);
+  }
+
+  return list;
 }

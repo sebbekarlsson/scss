@@ -1,0 +1,39 @@
+$theme-colors: (
+  "success": #98971a
+);
+
+@import "node_modules/bootstrap/scss/bootstrap";
+
+.pad-mobile {
+  box-sizing: border-box;
+
+  @media screen and (max-width: 500px) {
+    padding: 1rem;
+  }
+}
+
+.bepa {
+    .g {
+	color: green;
+
+	.c {
+	    color: red
+	}
+    }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-height {
+  transition: 0.2s;
+  height: 0px !important;
+}
+
+.alert {
+  color: red;
+  p {
+    margin: 0;
+  }
+}

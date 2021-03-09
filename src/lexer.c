@@ -117,6 +117,48 @@ scss_token_T* scss_lexer_next(scss_lexer_T* scss_lexer)
       return scss_lexer_parse_id(scss_lexer);
     }
 
+    if (scss_lexer->c == '-') {
+      char next = scss_lexer_peek(scss_lexer, 1);
+
+      if (isalnum(next)) {
+        return scss_lexer_parse_id(scss_lexer);
+      }
+    }
+
+    if (scss_lexer->c == '!') {
+      char next = scss_lexer_peek(scss_lexer, 1);
+
+      if (isalnum(next)) {
+        return scss_lexer_parse_id(scss_lexer);
+      }
+    }
+
+    if (scss_lexer->c == ':') {
+      char next = scss_lexer_peek(scss_lexer, 1);
+
+      if (next == ':') {
+        scss_lexer_advance(scss_lexer);
+        return scss_lexer_advance_token(scss_lexer,
+                                        init_scss_token(strdup("::"), SCSS_TOKEN_COLON_COLON));
+      }
+    }
+
+    if (scss_lexer->c == '#') {
+      char next = scss_lexer_peek(scss_lexer, 1);
+
+      if (isalnum(next) || isdigit(next)) {
+        return scss_lexer_parse_id(scss_lexer);
+      }
+    }
+
+    if (scss_lexer->c == '@') {
+      char next = scss_lexer_peek(scss_lexer, 1);
+
+      if (isalnum(next) || isdigit(next)) {
+        return scss_lexer_parse_rule(scss_lexer);
+      }
+    }
+
     if (scss_lexer->c == '"' || scss_lexer->c == '\'' || scss_lexer->c == '`') {
       return scss_lexer_parse_string(scss_lexer);
     }
@@ -311,7 +353,8 @@ scss_token_T* scss_lexer_parse_id(scss_lexer_T* scss_lexer)
 {
   char* str = strdup("");
 
-  if (scss_lexer->c == '.') {
+  if (scss_lexer->c == '.' || scss_lexer->c == '#' || scss_lexer->c == '$' ||
+      scss_lexer->c == '!' || scss_lexer->c == '-') {
     str = str_append(&str, scss_lexer->cstr);
     scss_lexer_advance(scss_lexer);
   }
@@ -323,6 +366,24 @@ scss_token_T* scss_lexer_parse_id(scss_lexer_T* scss_lexer)
   }
 
   return scss_lexer_switch_id(scss_lexer, init_scss_token(str, SCSS_TOKEN_ID));
+}
+
+scss_token_T* scss_lexer_parse_rule(scss_lexer_T* scss_lexer)
+{
+  char* str = strdup("");
+
+  if (scss_lexer->c == '@') {
+    str = str_append(&str, scss_lexer->cstr);
+    scss_lexer_advance(scss_lexer);
+  }
+
+  while (isalnum(scss_lexer->c) || isdigit(scss_lexer->c) || scss_lexer->c == '$' ||
+         scss_lexer->c == '-' || scss_lexer->c == '.') {
+    str = str_append(&str, scss_lexer->cstr);
+    scss_lexer_advance(scss_lexer);
+  }
+
+  return scss_lexer_switch_id(scss_lexer, init_scss_token(str, SCSS_TOKEN_RULE));
 }
 
 scss_token_T* scss_lexer_parse_string(scss_lexer_T* scss_lexer)
@@ -414,6 +475,16 @@ scss_token_T* scss_lexer_switch_id(scss_lexer_T* scss_lexer, scss_token_T* token
 {
   if (strcmp(token->value, "important") == 0)
     token->type = SCSS_TOKEN_IMPORTANT;
+  else if (strcmp(token->value, "@import") == 0)
+    token->type = SCSS_TOKEN_IMPORT;
+  else if (strcmp(token->value, "@media") == 0)
+    token->type = SCSS_TOKEN_MEDIA;
+  else if (token->value[0] == '$')
+    token->type = SCSS_TOKEN_VAR;
+  else if (token->value[0] == '.')
+    token->type = SCSS_TOKEN_CLASSNAME;
+  else if (token->value[0] == '#')
+    token->type = SCSS_TOKEN_HASHNAME;
 
   return scss_ret_tok(scss_lexer, token);
 }
