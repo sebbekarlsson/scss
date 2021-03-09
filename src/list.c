@@ -1,5 +1,3 @@
-#ifndef LIST_IMPL_H
-#define LIST_IMPL_H
 #include "include/list.h"
 #include <string.h>
 
@@ -264,4 +262,3 @@ void list_free_shallow(list_T* list)
   list_clear(list);
   free(list);
 }
-#endif
