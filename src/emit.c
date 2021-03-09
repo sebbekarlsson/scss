@@ -226,9 +226,9 @@ char* scss_emit_style_rule(scss_AST_T* ast)
       free(leftstr);
   }
 
-  if (ast->children) {
-    for (unsigned int i = 0; i < ast->children->size; i++) {
-      scss_AST_T* child = (scss_AST_T*)ast->children->items[i];
+  if (ast->siblings) {
+    for (unsigned int i = 0; i < ast->siblings->size; i++) {
+      scss_AST_T* child = (scss_AST_T*)ast->siblings->items[i];
       char* childstr = 0;
       char* em = scss_emit(child);
       childstr = str_append(&childstr, em);

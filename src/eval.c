@@ -66,25 +66,34 @@ scss_AST_T* scss_eval_style_rule(scss_AST_T* ast, eval_T* eval)
   }
 
   list_T* children = ast_get_children(ast);
-
   unsigned int len = children->size;
 
+  /**
+   * Unwrap every children from the body and make them inherit
+   * the css queries from the current evaluated AST.
+   */
   for (unsigned int i = 0; i < len; i++) {
     scss_AST_T* child = (scss_AST_T*)children->items[i];
+
+    // inherit css query.
     list_T* merged = list_merge(ast->list_value, child->list_value);
     child->list_value = merged;
-    list_push_safe(ast->children, child);
 
+    // move child to siblings of the current evaluated AST.
+    list_push_safe(ast->siblings, child);
+
+    // remove the child from the body of the current evaluated AST.
     if (ast->body && ast->body->list_value && ast->body->list_value->size)
       list_remove(ast->body->list_value, child, 0);
   }
 
+  // remove last sibling because only one is to be emitted.
   if (ast->parent)
-    list_pop(ast->children);
+    list_pop(ast->siblings);
 
-  if (ast->children && ast->children->size) {
-    for (unsigned int i = 0; i < ast->children->size; i++)
-      ast->children->items[i] = scss_eval(ast->children->items[i], eval);
+  if (ast->siblings && ast->siblings->size) {
+    for (unsigned int i = 0; i < ast->siblings->size; i++)
+      ast->siblings->items[i] = scss_eval(ast->siblings->items[i], eval);
   }
 
   ast->body = ast->body ? scss_eval(ast->body, eval) : ast->body;

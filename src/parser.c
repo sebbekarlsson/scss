@@ -340,7 +340,7 @@ scss_AST_T* scss_parser_parse_prop_dec(scss_parser_T* parser, scss_AST_T* parent
   if (parser->token->type == SCSS_TOKEN_LBRACE) {
     EAT(SCSS_TOKEN_LBRACE);
     ast->type = SCSS_AST_STYLE_RULE;
-    ast->children = init_list(sizeof(AST*));
+    ast->siblings = init_list(sizeof(AST*));
     if (parser->token->type != SCSS_TOKEN_RBRACE) {
       ast->body = scss_parser_parse_style_rule_body(parser, ast);
     }

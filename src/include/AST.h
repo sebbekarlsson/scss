@@ -48,7 +48,7 @@ typedef struct SCSS_AST_STRUCT
   list_T* options;
   list_T* copies;
   list_T* flags;
-  list_T* children;
+  list_T* siblings;
 
 } scss_AST_T;
 

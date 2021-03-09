@@ -10,7 +10,7 @@ scss_AST_T* init_scss_ast(int type)
 
   if (ast->type == SCSS_AST_STYLE_RULE) {
     ast->footer = init_scss_ast(SCSS_AST_COMPOUND);
-    ast->children = init_list(sizeof(scss_AST_T*));
+    ast->siblings = init_list(sizeof(scss_AST_T*));
   }
 
   if (ast->type == SCSS_AST_COMPOUND || ast->type == SCSS_AST_STYLE_RULE ||
