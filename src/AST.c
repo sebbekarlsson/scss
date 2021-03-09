@@ -80,23 +80,6 @@ unsigned int ast_has_properties(scss_AST_T* ast)
   return 0;
 }
 
-list_T* ast_get_parents(scss_AST_T* ast)
-{
-  list_T* list = init_list(sizeof(scss_AST_T*));
-
-  if (!ast)
-    return list;
-
-  scss_AST_T* parent = ast->parent;
-
-  while (parent) {
-    list_push(list, parent);
-    parent = parent->parent;
-  }
-
-  return list;
-}
-
 list_T* ast_get_children(scss_AST_T* ast)
 {
   list_T* list = init_list(sizeof(scss_AST_T*));

@@ -58,8 +58,6 @@ void scss_ast_free(scss_AST_T* ast);
 
 scss_AST_T* init_style_rule(list_T* selectors, scss_AST_T* body);
 
-list_T* ast_get_parents(scss_AST_T* ast);
-
 list_T* ast_get_children(scss_AST_T* ast);
 
 unsigned int ast_has_properties(scss_AST_T* ast);
