@@ -1,7 +1,7 @@
 #ifndef SCSS_AST_H
 #define SCSS_AST_H
 #include "lexer.h"
-#include "list.h"
+#include <list/list.h>
 #include "token.h"
 typedef struct SCSS_AST_STRUCT
 {

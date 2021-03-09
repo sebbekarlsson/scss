@@ -1,7 +1,7 @@
 exec = scss.out
 sources = $(wildcard src/*.c) $(wildcard src/hooks/*.c)
 objects = $(sources:.c=.o)
-flags = -I$$HOME/.local/include -lm -ldl -fPIC -rdynamic -L$$HOME/.local/lib
+flags = -I$$HOME/.local/include -lm -ldl -fPIC -rdynamic -L$$HOME/.local/lib -llist
 
 objects_no_main = $(filter-out src/main.o, $(objects))
 
@@ -14,11 +14,16 @@ flags += -D DEBUG -pg -Wall -g
 endif
 
 
-$(exec): $(cssheaders) $(objects)
+$(exec): liblist.a $(cssheaders) $(objects)
 	gcc $(objects) $(flags) -g -o $(exec)
 
 libscss.a: $(objects_no_main)
 	ar rcs $@ $^
+
+liblist.a:
+	git submodule init; git submodule update; git submodule sync;
+	path=$(pwd)
+	cd external/liblist && make install && cp *.a $path
 
 %.o: %.c include/%.h
 	gcc -c $(flags) $< -o $@

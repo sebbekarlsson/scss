@@ -1,0 +1,3 @@
+[submodule "external/liblist"]
+	path = external/liblist
+	url = https://github.com/sebbekarlsson/liblist.git

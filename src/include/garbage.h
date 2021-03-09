@@ -1,7 +1,7 @@
 #ifndef SCSS_GARBAGE_H
 #define SCSS_GARBAGE_H
 #include "AST.h"
-#include "list.h"
+#include <list/list.h>
 typedef struct SCSS_GARBAGE_STRUCT
 {
   list_T* asts;

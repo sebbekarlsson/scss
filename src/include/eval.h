@@ -1,7 +1,7 @@
 #ifndef SCSS_EVAL_H
 #define SCSS_EVAL_H
 #include "AST.h"
-#include "list.h"
+#include <list/list.h>
 
 typedef struct EVAL_STRUCT
 {
