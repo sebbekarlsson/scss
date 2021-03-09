@@ -38,12 +38,11 @@ void test_nested()
   AST* child = (AST*)root->list_value->items[0];
   ASSERT(child != 0, "child is not null.");
   ASSERT(child->type == SCSS_AST_STYLE_RULE, "child.type == SCSS_AST_STYLE_RULE");
-  ASSERT(child->footer != 0, "child.footer is not null.");
-  ASSERT(child->footer->list_value != 0, "child.footer has list");
-  ASSERT(child->footer->list_value->size > 0, "child.footer size > 0");
+  ASSERT(child->children != 0, "child.footer is not null.");
+  ASSERT(child->children->size > 0, "child.footer size > 0");
 
-  for (unsigned int i = 0; i < child->footer->list_value->size; i++) {
-    AST* el = (AST*)child->footer->list_value->items[i];
+  for (unsigned int i = 0; i < child->children->size; i++) {
+    AST* el = (AST*)child->children->items[i];
 
     ASSERT(el != 0, "element in child footer is not null.");
     ASSERT(el->type == SCSS_AST_STYLE_RULE, "element is of type SCSS_AST_STYLE_RULE_DEC");

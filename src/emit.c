@@ -1,6 +1,7 @@
 #include "include/emit.h"
 #include "include/css/call.css.h"
 #include "include/css/import.css.h"
+#include "include/css/media_query.css.h"
 #include "include/css/prop_dec.css.h"
 #include "include/css/style_rule.css.h"
 #include "include/string_utils.h"
@@ -138,9 +139,13 @@ char* scss_emit(scss_AST_T* ast)
     str = str_append(&str, "(");
 
   switch (ast->type) {
+    case SCSS_AST_MEDIA_QUERY: str = str_append(&str, scss_emit_media_query(ast)); break;
     case SCSS_AST_STYLE_RULE: str = str_append(&str, scss_emit_style_rule(ast)); break;
     case SCSS_AST_PROP_DEC: str = str_append(&str, scss_emit_prop_dec(ast)); break;
     case SCSS_AST_CALL: str = str_append(&str, scss_emit_call(ast)); break;
+    case SCSS_AST_CLASSNAME:
+    case SCSS_AST_HASHNAME:
+    case SCSS_AST_TAGNAME:
     case SCSS_AST_NAME: str = str_append(&str, scss_emit_name(ast)); break;
     case SCSS_AST_VAR: str = str_append(&str, scss_emit_var(ast)); break;
     case SCSS_AST_IMPORT: str = str_append(&str, scss_emit_import(ast)); break;
@@ -192,29 +197,60 @@ char* scss_emit(scss_AST_T* ast)
 char* scss_emit_style_rule(scss_AST_T* ast)
 {
   char* str = 0;
+  if (ast->body && ast->body->list_value && ast->body->list_value->size) {
+
+    char* footerstr = ast->footer && ast->footer->list_value ? scss_emit(ast->footer) : strdup(" ");
+
+    char* leftstr = ast->list_value ? emit_spaced_list(ast->list_value) : strdup(" ");
+
+    char* bodystr = ast->body ? scss_emit(ast->body) : strdup(" ");
+
+    if (footerstr) {
+      char* f = 0;
+      f = str_append(&f, "\n");
+      f = str_append(&f, footerstr);
+      free(footerstr);
+      footerstr = f;
+    }
+
+    TEMPLATE(style_rule, str, strlen(leftstr) + strlen(bodystr) + strlen(footerstr), leftstr,
+             bodystr, footerstr);
+
+    if (bodystr)
+      free(bodystr);
+
+    if (footerstr)
+      free(footerstr);
+
+    if (leftstr)
+      free(leftstr);
+  }
+
+  if (ast->children) {
+    for (unsigned int i = 0; i < ast->children->size; i++) {
+      scss_AST_T* child = (scss_AST_T*)ast->children->items[i];
+      char* childstr = 0;
+      char* em = scss_emit(child);
+      childstr = str_append(&childstr, em);
+      str = str_append(&str, childstr);
+    }
+  }
+
+  return str ? str : strdup("");
+}
+
+char* scss_emit_media_query(scss_AST_T* ast)
+{
+  char* str = 0;
 
   char* leftstr = ast->list_value ? emit_spaced_list(ast->list_value) : strdup(" ");
 
   char* bodystr = ast->body ? scss_emit(ast->body) : strdup(" ");
 
-  char* footerstr = ast->footer && ast->footer->list_value ? scss_emit(ast->footer) : strdup(" ");
-
-  if (footerstr) {
-    char* f = 0;
-    f = str_append(&f, "\n");
-    f = str_append(&f, footerstr);
-    free(footerstr);
-    footerstr = f;
-  }
-
-  TEMPLATE(style_rule, str, strlen(leftstr) + strlen(bodystr) + strlen(footerstr), leftstr, bodystr,
-           footerstr);
+  TEMPLATE(media_query, str, strlen(leftstr) + strlen(bodystr), leftstr, bodystr);
 
   if (bodystr)
     free(bodystr);
-
-  if (footerstr)
-    free(footerstr);
 
   if (leftstr)
     free(leftstr);
@@ -264,7 +300,22 @@ char* scss_emit_name(scss_AST_T* ast)
 
 char* scss_emit_var(scss_AST_T* ast)
 {
-  return strdup(ast->name);
+  char* str = 0;
+  char* name = strdup(ast->name);
+  str = str_append(&str, name);
+
+  if (ast->value) {
+    str = str_append(&str, ":");
+    char* valuestr = scss_emit(ast->value);
+
+    if (valuestr) {
+      str = str_append(&str, valuestr);
+      str = str_append(&str, ";");
+      free(valuestr);
+    }
+  }
+
+  return str;
 }
 
 char* scss_emit_import(scss_AST_T* ast)
@@ -313,9 +364,13 @@ char* scss_emit_binop(scss_AST_T* ast)
   char* tokstr = strdup(ast->token->value);
   char* rightstr = scss_emit(ast->right);
   str = str_append(&str, leftstr);
-  str = str_append(&str, " ");
+
+  if (ast->token && ast->token->type != SCSS_TOKEN_COLON_COLON)
+    str = str_append(&str, " ");
   str = str_append(&str, tokstr);
-  str = str_append(&str, " ");
+
+  if (ast->token && ast->token->type != SCSS_TOKEN_COLON_COLON)
+    str = str_append(&str, " ");
   str = str_append(&str, rightstr);
 
   if (leftstr)

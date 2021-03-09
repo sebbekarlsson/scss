@@ -11,6 +11,17 @@ $theme-colors: (
     padding: 1rem;
   }
 }
+
+.bepa {
+    .g {
+	color: green;
+
+	.c {
+	    color: red
+	}
+    }
+}
+
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -21,6 +32,7 @@ $theme-colors: (
 }
 
 .alert {
+  color: red;
   p {
     margin: 0;
   }

@@ -1,0 +1,25 @@
+$theme-colors: (
+  "success": #98971a
+);
+
+.bepa {
+    color: green;
+    background-color: red;
+    box-sizing: border-box;
+
+    .div {
+	color: green;
+
+	.what {
+	    color: black;
+	}
+    }
+}
+
+.ball {
+    width: 100;
+
+    .inner {
+	display: inline;
+    }
+}

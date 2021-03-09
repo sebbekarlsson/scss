@@ -32,12 +32,16 @@ scss_AST_T* scss_eval(scss_AST_T* ast, eval_T* eval)
     case SCSS_AST_CALL: return scss_eval_call(ast, eval); break;
     case SCSS_AST_VAR:
     case SCSS_AST_NAME: return scss_eval_name(ast, eval); break;
+    case SCSS_AST_CLASSNAME: return scss_eval_classname(ast, eval); break;
+    case SCSS_AST_HASHNAME: return scss_eval_hashname(ast, eval); break;
+    case SCSS_AST_TAGNAME: return scss_eval_tagname(ast, eval); break;
     case SCSS_AST_STRING: return scss_eval_string(ast, eval); break;
     case SCSS_AST_INT: return scss_eval_int(ast, eval); break;
     case SCSS_AST_FLOAT: return scss_eval_float(ast, eval); break;
     case SCSS_AST_BINOP: return scss_eval_binop(ast, eval); break;
     case SCSS_AST_COMPOUND: return scss_eval_compound(ast, eval); break;
     case SCSS_AST_IMPORT:
+    case SCSS_AST_MEDIA_QUERY:
     case SCSS_AST_NOOP: return ast; break;
     default: {
       printf("Cannot eval `%d`\n", ast->type);
@@ -48,30 +52,11 @@ scss_AST_T* scss_eval(scss_AST_T* ast, eval_T* eval)
 
 scss_AST_T* scss_eval_style_rule(scss_AST_T* ast, eval_T* eval)
 {
-  list_T* tmp = init_list(sizeof(AST*));
+  if (!ast)
+    return 0;
 
-  if (ast->list_value && eval->stack->size) {
-    AST* last = (AST*)eval->stack->items[eval->stack->size - 1];
-    if (last && last->list_value && last->list_value->size) {
-      unsigned int len = ast->list_value->size;
-
-      for (unsigned int i = 0; i < len; i++) {
-        AST* selector = (AST*)last->list_value->items[i];
-        if (!selector)
-          continue;
-
-        if (selector->type == SCSS_AST_BINOP && selector->token->type == SCSS_TOKEN_COMMA) {
-          list_push(tmp, selector->left);
-          list_push(tmp, selector->right);
-          continue;
-        }
-
-        list_prefix(ast->list_value, selector);
-      }
-    }
-  }
-
-  list_push(eval->stack, ast);
+  if (eval->stack)
+    list_push(eval->stack, ast);
 
   for (unsigned int i = 0; i < ast->list_value->size; i++) {
     AST* child = (AST*)ast->list_value->items[i];
@@ -80,28 +65,29 @@ scss_AST_T* scss_eval_style_rule(scss_AST_T* ast, eval_T* eval)
     ast->list_value->items[i] = scss_eval(child, eval);
   }
 
-  ast->body = ast->body ? scss_eval(ast->body, eval) : ast->body;
+  list_T* children = ast_get_children(ast);
 
-  if (eval->callee && eval->callee != ast && eval->stack->size) {
-    list_push(eval->callee->footer->list_value, ast);
+  unsigned int len = children->size;
 
-    for (unsigned int i = 0; i < tmp->size; i++) {
-      list_T* rules = init_list(sizeof(AST*));
-      list_push(rules, tmp->items[i]);
-      list_T* merged = list_merge(rules, ast->list_value);
-      list_free_shallow(rules);
-      AST* style_rule = init_style_rule(merged, ast->body);
-      list_free_shallow(merged);
-      list_push(eval->callee->footer->list_value, style_rule);
-      ast->type = SCSS_AST_NOOP;
-    }
+  for (unsigned int i = 0; i < len; i++) {
+    scss_AST_T* child = (scss_AST_T*)children->items[i];
+    list_T* merged = list_merge(ast->list_value, child->list_value);
+    child->list_value = merged;
+    list_push_safe(ast->children, child);
 
-    list_free_shallow(tmp);
-
-    return init_scss_ast(SCSS_AST_NOOP);
+    if (ast->body && ast->body->list_value && ast->body->list_value->size)
+      list_remove(ast->body->list_value, child, 0);
   }
 
-  list_free_shallow(tmp);
+  if (ast->parent)
+    list_pop(ast->children);
+
+  if (ast->children && ast->children->size) {
+    for (unsigned int i = 0; i < ast->children->size; i++)
+      ast->children->items[i] = scss_eval(ast->children->items[i], eval);
+  }
+
+  ast->body = ast->body ? scss_eval(ast->body, eval) : ast->body;
 
   return ast;
 }
@@ -127,6 +113,21 @@ scss_AST_T* scss_eval_prop_dec(scss_AST_T* ast, eval_T* eval)
 }
 
 scss_AST_T* scss_eval_name(scss_AST_T* ast, eval_T* eval)
+{
+  return ast;
+}
+
+scss_AST_T* scss_eval_classname(scss_AST_T* ast, eval_T* eval)
+{
+  return ast;
+}
+
+scss_AST_T* scss_eval_hashname(scss_AST_T* ast, eval_T* eval)
+{
+  return ast;
+}
+
+scss_AST_T* scss_eval_tagname(scss_AST_T* ast, eval_T* eval)
 {
   return ast;
 }
@@ -174,10 +175,18 @@ scss_AST_T* scss_eval_compound(scss_AST_T* ast, eval_T* eval)
     if (!child)
       continue;
 
-    if (child->type == SCSS_AST_STYLE_RULE && !eval->callee) {
+    if ((child->type == SCSS_AST_STYLE_RULE || child->type == SCSS_AST_MEDIA_QUERY) &&
+        !eval->callee) {
       eval->callee = child;
     }
     ast->list_value->items[i] = scss_eval(child, eval);
+
+    eval->callee = 0;
+
+    if (eval->stack) {
+      list_free_shallow(eval->stack);
+      eval->stack = init_list(sizeof(AST*));
+    }
   }
 
   return ast;
